@@ -8,15 +8,10 @@
 #ifndef StRHICfEventMaker_HH
 #define StRHICfEventMaker_HH
 
-
-// final test !!!
-// #include <iostream>
 #include <fstream>
 #include <string>
-#include "TRandom3.h"
-
-
 #include <iostream>
+
 #include <TROOT.h>
 #include <TString.h>
 #include "TChain.h"
@@ -179,9 +174,6 @@ class StRHICfEventMaker : public StMaker, StRHICfFunction
 
 		int fillNumArray[5];
 		int spinPatterns[5][120][2]; // [Fill number][bunch number][blue, yellow] for Fill no. 21142, 21145, 21148, 21149, 21150
-
-		// final crosscheck test !!!
-		ofstream txtFile;
 
 	protected:
 		enum ioMode {ioRead, ioWrite};

@@ -18,7 +18,6 @@
 #include "StRHICfFMS.h"
 #include "StRHICfRPS.h"
 
-#include <iostream> // test
 using namespace std;
 
 class StRHICfEventDst : public TObject

@@ -125,18 +125,12 @@ Int_t StRHICfEventMaker::Make()
     if(!muRHICfHit){LOG_ERROR << "StRHICfEventMaker::Make() -- RHICfHit not including " << endm; return kStErr;}
     if(!muFmsColl){LOG_ERROR << "StRHICfEventMaker::Make() -- MuFmsCollection not including " << endm; return kStErr;}
 
-    cout << " start event " << endl; // test
-
-
     // Initialize a data structure
     clear();
-    cout << "after clear " << endl; // test
 
     // Main data Saving part
     eventData();
-    cout << "after event " << endl; // test
     rhicfData();
-    cout << "after rhicf " << endl; // test
     vertex();
     trackData();
     btofData();
