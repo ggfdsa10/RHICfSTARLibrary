@@ -13,7 +13,7 @@
 #include "StRHICfBBC.h"
 #include "StRHICfVPD.h"
 #include "StRHICfZDC.h"
-#include "StRHICfParticle.h"
+#include "StRHICfDetHit.h"
 #include "StRHICfDetPoint.h"
 #include "StRHICfFMS.h"
 #include "StRHICfRPS.h"
@@ -42,7 +42,7 @@ class StRHICfEventDst : public TObject
         void OffRPS();
 
         StRHICfEvent* GetEvent();
-        StRHICfParticle* GetRHICfParticle(int idx);
+        StRHICfDetHit* GetRHICfDetHit();
         StRHICfDetPoint* GetRHICfDetPoint(int idx);
         StRHICfTPCTrack* GetTPCTrack(int idx);
         StRHICfBTof* GetBTof(int idx);
@@ -52,7 +52,6 @@ class StRHICfEventDst : public TObject
         StRHICfFMS* GetFMS(int idx);
         StRHICfRPS* GetRPS(int idx);
 
-        Int_t GetRHICfParticleNum();
         Int_t GetRHICfDetPointNum();
         Int_t GetTPCTrackNum();
         Int_t GetBTofNum();
@@ -63,7 +62,7 @@ class StRHICfEventDst : public TObject
         void InitClonesArray();
 
         TClonesArray* mEvent;
-        TClonesArray* mRHICfParticle;
+        TClonesArray* mRHICfDetHit;
         TClonesArray* mRHICfDetPoint;
         TClonesArray* mTPCTrack;
         TClonesArray* mBTof;

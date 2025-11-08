@@ -19,7 +19,6 @@ void StRHICfSimRHICfPoint::Clear(Option_t *option)
 
     fill_n(&mPointPos[0], rXYNum, -999.);
     fill_n(&mPointEnergy[0], 2, -999.);
-    fill_n(&mTowerSumEnergy[0], 2, -999.);
 }
 
 void StRHICfSimRHICfPoint::SetTowerIdx(int val){mTowerIdx = val;}
@@ -37,14 +36,7 @@ void StRHICfSimRHICfPoint::SetPointEnergy(float pid1, float pid2)
     mPointEnergy[1] = pid2;
 }
 
-void StRHICfSimRHICfPoint::SetTowerSumEnergy(float all, float part)
-{
-    mTowerSumEnergy[0] = all;
-    mTowerSumEnergy[1] = part;
-}
-
 Int_t StRHICfSimRHICfPoint::GetTowerIdx(){return mTowerIdx;}
 Int_t StRHICfSimRHICfPoint::GetPID(){return mParticleID;}
 Float_t StRHICfSimRHICfPoint::GetPointPos(int xy){return mPointPos[xy];}
 Float_t StRHICfSimRHICfPoint::GetPointEnergy(int particle){return mPointEnergy[particle];}
-Float_t StRHICfSimRHICfPoint::GetTowerSumEnergy(int order){return mTowerSumEnergy[order];}

@@ -16,7 +16,7 @@ StRHICfEventDst::~StRHICfEventDst()
 void StRHICfEventDst::Clear(Option_t* option)
 {
     if(mEvent){mEvent -> Clear("C");}
-    if(mRHICfParticle){mRHICfParticle -> Clear("C");}
+    if(mRHICfDetHit){mRHICfDetHit -> Clear("C");}
     if(mRHICfDetPoint){mRHICfDetPoint -> Clear("C");}
     if(mTPCTrack){mTPCTrack -> Clear("C");}
     if(mBTof){mBTof -> Clear("C");}
@@ -30,7 +30,7 @@ void StRHICfEventDst::Clear(Option_t* option)
 void StRHICfEventDst::InitClonesArray()
 {
     mEvent = 0;
-    mRHICfParticle = 0;
+    mRHICfDetHit = 0;
     mRHICfDetPoint = 0;
     mTPCTrack = 0;
     mBTof = 0;
@@ -44,7 +44,7 @@ void StRHICfEventDst::InitClonesArray()
 Int_t StRHICfEventDst::CreateDstArray(TTree* tree)
 {
     mEvent = new TClonesArray("StRHICfEvent");
-    mRHICfParticle = new TClonesArray("StRHICfParticle");
+    mRHICfDetHit = new TClonesArray("StRHICfDetHit");
     mRHICfDetPoint = new TClonesArray("StRHICfDetPoint");
     if(!mOffTPCTrack){mTPCTrack = new TClonesArray("StRHICfTPCTrack");}
     if(!mOffBTof){mBTof = new TClonesArray("StRHICfBTof");}
@@ -55,7 +55,7 @@ Int_t StRHICfEventDst::CreateDstArray(TTree* tree)
     if(!mOffRPS){mRPS = new TClonesArray("StRHICfRPS");}
 
     if(mEvent){tree -> Branch("StRHICfEvent", &mEvent);}
-    if(mRHICfParticle){tree -> Branch("StRHICfParticle", &mRHICfParticle);}
+    if(mRHICfDetHit){tree -> Branch("StRHICfDetHit", &mRHICfDetHit);}
     if(mRHICfDetPoint){tree -> Branch("StRHICfDetPoint", &mRHICfDetPoint);}
     if(mTPCTrack){tree -> Branch("StRHICfTPCTrack", &mTPCTrack);}
     if(mBTof){tree -> Branch("StRHICfBTof", &mBTof);}
@@ -71,7 +71,7 @@ Int_t StRHICfEventDst::CreateDstArray(TTree* tree)
 Int_t StRHICfEventDst::ReadDstArray(TTree* tree)
 {
     if(tree->GetBranchStatus("StRHICfEvent")){tree -> SetBranchAddress("StRHICfEvent", &mEvent);}
-    if(tree->GetBranchStatus("StRHICfParticle")){tree -> SetBranchAddress("StRHICfParticle", &mRHICfParticle);}
+    if(tree->GetBranchStatus("StRHICfDetHit")){tree -> SetBranchAddress("StRHICfDetHit", &mRHICfDetHit);}
     if(tree->GetBranchStatus("StRHICfDetPoint")){tree -> SetBranchAddress("StRHICfDetPoint", &mRHICfDetPoint);}
     if(!mOffTPCTrack && tree->GetBranchStatus("StRHICfTPCTrack")){tree -> SetBranchAddress("StRHICfTPCTrack", &mTPCTrack);}
     if(!mOffBTof && tree->GetBranchStatus("StRHICfBTof")){tree -> SetBranchAddress("StRHICfBTof", &mBTof);}
@@ -87,7 +87,7 @@ Int_t StRHICfEventDst::ReadDstArray(TTree* tree)
 Int_t StRHICfEventDst::ReadDstArray(TChain* chain)
 {
     if(chain->GetBranchStatus("StRHICfEvent")){chain -> SetBranchAddress("StRHICfEvent", &mEvent);}
-    if(chain->GetBranchStatus("StRHICfParticle")){chain -> SetBranchAddress("StRHICfParticle", &mRHICfParticle);}
+    if(chain->GetBranchStatus("StRHICfDetHit")){chain -> SetBranchAddress("StRHICfDetHit", &mRHICfDetHit);}
     if(chain->GetBranchStatus("StRHICfDetPoint")){chain -> SetBranchAddress("StRHICfDetPoint", &mRHICfDetPoint);}
     if(!mOffTPCTrack && chain->GetBranchStatus("StRHICfTPCTrack")){chain -> SetBranchAddress("StRHICfTPCTrack", &mTPCTrack);}
     if(!mOffBTof && chain->GetBranchStatus("StRHICfBTof")){chain -> SetBranchAddress("StRHICfBTof", &mBTof);}
@@ -120,7 +120,7 @@ void StRHICfEventDst::OffFMS(){mOffFMS = true;}
 void StRHICfEventDst::OffRPS(){mOffRPS = true;}
 
 StRHICfEvent* StRHICfEventDst::GetEvent(){return (StRHICfEvent*)mEvent->ConstructedAt(0);}
-StRHICfParticle* StRHICfEventDst::GetRHICfParticle(int idx){return (StRHICfParticle*)mRHICfParticle->ConstructedAt(idx);}
+StRHICfDetHit* StRHICfEventDst::GetRHICfDetHit(){return (StRHICfDetHit*)mRHICfDetHit->ConstructedAt(0);}
 StRHICfDetPoint* StRHICfEventDst::GetRHICfDetPoint(int idx){return (StRHICfDetPoint*)mRHICfDetPoint->ConstructedAt(idx);}
 
 StRHICfTPCTrack* StRHICfEventDst::GetTPCTrack(int idx)
@@ -165,7 +165,6 @@ StRHICfRPS* StRHICfEventDst::GetRPS(int idx)
     return (StRHICfRPS*)mRPS->ConstructedAt(idx);
 }
 
-Int_t StRHICfEventDst::GetRHICfParticleNum(){return mRHICfParticle->GetEntries();}
 Int_t StRHICfEventDst::GetRHICfDetPointNum(){return mRHICfDetPoint->GetEntries();}
 
 Int_t StRHICfEventDst::GetTPCTrackNum()

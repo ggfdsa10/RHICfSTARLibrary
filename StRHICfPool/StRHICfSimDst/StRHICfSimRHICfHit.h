@@ -20,7 +20,7 @@ class StRHICfSimRHICfHit : public TObject
         void SetPlatedE(int tower, int plate, float val);
         void SetGSOBardE(int tower, int layer, int xy, int bar, float val);
 
-        void SetSimTrkId(int tower, int id);
+        void SetSimTrkId(int tower, int id, double incidentPosX, double incidentPosY, double incidentEnergy);
 
         void SetL20(int tower, float val);
         void SetL90(int tower, float val);
@@ -46,6 +46,8 @@ class StRHICfSimRHICfHit : public TObject
 
         Int_t GetSimTrkNum(int tower);
         Int_t GetSimTrkId(int tower, int idx);
+        Double_t GetSimTrkIncidentPos(int tower, int idx, int xy);
+        Double_t GetSimTrkIncidentEnergy(int tower, int idx);
 
         Float_t GetL20(int tower);
         Float_t GetL90(int tower);
@@ -73,6 +75,9 @@ class StRHICfSimRHICfHit : public TObject
         Float_t mLargeGSOBardE[rLayerNum][rXYNum][rLargeBarNum]; // TL
 
         vector<int> mSimTrkId[rTowerNum];
+        vector<double> mSimTrkIncidentPosX[rTowerNum];
+        vector<double> mSimTrkIncidentPosY[rTowerNum];
+        vector<double> mSimTrkIncidentE[rTowerNum];
 
         // RHICf Reco Hits (reconstruction)
         Float_t mL20[rTowerNum];

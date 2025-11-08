@@ -25,8 +25,6 @@ class StRHICfSimGenerator : public StarGenerator
         int Generate();
 
         void SetGenFile(TString file);
-        void SetGeneratorModel(int generatorId);
-        void SetRHICfRunType(int runtype);
 
         int InitTree();
 
@@ -39,20 +37,15 @@ class StRHICfSimGenerator : public StarGenerator
     protected:
         void FillPP( StarGenEvent *event );
 
-        Int_t mGeneratorId;
-        Int_t mRHICfRunType;
-
         TString mFileName;
         TFile* mGenFile;
+        TTree* mGenRunTree;
         TTree* mGenTree;
         Int_t mEventIdx;
         Int_t mSetEventNumber;
         Int_t mTotalEventNumber;
 
-        Int_t mEventProcess;
-        Double_t mEvent_sHat;
-        Double_t mEvent_tHat;
-        Double_t mEvent_uHat;
+        Int_t mProcessID;
         TClonesArray* mParticleArr;
         TParticle* mParticle;
 

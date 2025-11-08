@@ -12,9 +12,6 @@
 #ifndef StRHICfHitMaker_H
 #define StRHICfHitMaker_H
 
-// final test !!!
-#include <iostream>
-#include <fstream>
 #include <string>
 #include "TRandom3.h"
 
@@ -41,8 +38,6 @@ class StRHICfHitMaker : public StMaker, StRHICfFunction
 		int Make();
 		int Finish();
 
-		void TestIdx(TString idx){testIdx = idx;}
-
 	private:
 		int caliPlate();
 		int caliGSOBar();
@@ -58,10 +53,6 @@ class StRHICfHitMaker : public StMaker, StRHICfFunction
 		StMuRHICfUtil* mMuRHICfUtil = 0;
 
 		const int mADCThreshold = 3600;
-
-		// final crosscheck test !!!
-		ofstream txtFile;
-		TString testIdx;
 
 	ClassDef(StRHICfHitMaker,0);
 };

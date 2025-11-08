@@ -20,6 +20,7 @@
 #include "StMuDSTMaker/COMMON/StMuDst.h"
 #include "StMuDSTMaker/COMMON/StMuEvent.h"
 #include "StMuDSTMaker/COMMON/StMuRHICfCollection.h"
+#include "StMuDSTMaker/COMMON/StMuRHICfRawHit.h"
 #include "StMuDSTMaker/COMMON/StMuRHICfHit.h"
 #include "StMuDSTMaker/COMMON/StMuRHICfUtil.h"
 
@@ -134,6 +135,7 @@ int StRHICfPointMaker::Make()
 
 int StRHICfPointMaker::Finish()
 {
+
   return kStOK;
 }
 
@@ -301,6 +303,10 @@ int StRHICfPointMaker::recoEnergy()
 
     // Type-1 
     if(resultHitNum == 1){
+      float peakHeightX = mLocalRHICfHitColl -> getSinglePeakHeight(it, mGSOMaxLayer[it][0], 0);
+      float peakHeightY = mLocalRHICfHitColl -> getSinglePeakHeight(it, mGSOMaxLayer[it][0], 1);
+      if(peakHeightX < 0.035 || peakHeightY < 0.035){continue;}
+
       StRHICfPoint* pointColl = new StRHICfPoint();
       pointColl -> setTowerIdx(it);
       pointColl -> setPID(mPID[it]);
@@ -314,10 +320,15 @@ int StRHICfPointMaker::recoEnergy()
       pointColl -> setPointPos(posX, posY);
       pointColl -> setPointEnergy(resultPhotonEnergy, resultHadronEnergy);
       mRHICfPointColl.push_back(pointColl);
+
     }
-    
-    // Type-2
-    else if(resultHitNum == 2){
+    else if(resultHitNum == 2){ // Type-2
+      float peakHeightX1 = mLocalRHICfHitColl -> getMultiPeakHeight(it, mGSOMaxLayer[it][0], 0, 0);
+      float peakHeightY1 = mLocalRHICfHitColl -> getMultiPeakHeight(it, mGSOMaxLayer[it][0], 1, 0);
+      float peakHeightX2 = mLocalRHICfHitColl -> getMultiPeakHeight(it, mGSOMaxLayer[it][0], 0, 1);
+      float peakHeightY2 = mLocalRHICfHitColl -> getMultiPeakHeight(it, mGSOMaxLayer[it][0], 1, 1);
+      if(peakHeightX1 < 0.035 || peakHeightY1 < 0.035 || peakHeightX2 < 0.035 || peakHeightY2 < 0.035){continue;}
+
       for(int points=0; points<resultHitNum; points++){
         StRHICfPoint* pointColl = new StRHICfPoint();
         pointColl -> setTowerIdx(it);
@@ -335,6 +346,7 @@ int StRHICfPointMaker::recoEnergy()
       }
     }
   }
+
   return kStOk;
 }
 

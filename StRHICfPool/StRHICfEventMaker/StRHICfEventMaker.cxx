@@ -294,10 +294,6 @@ Int_t StRHICfEventMaker::openWrite()
                     while(getline(sstreamWord, word, '_')){
                         // find a production stream type 
                         if(nIdx==1){streamTypeName = word;}
-                        if(streamTypeName == "physics"){
-                            LOG_ERROR << "StRHICfEventMaker::openWrite() -- Files has not RHICf stream!!! (" << wordPaths[wordSize-1] << ")" << endm;
-                            return kStErr;
-                        }
                         // find a runnumber 
                         if(nIdx==2){
                             if(word!="adc"){runNumber = word;}
@@ -333,10 +329,6 @@ Int_t StRHICfEventMaker::openWrite()
             while(getline(sstreamWord, word, '_')){
                 // find a production stream type 
                 if(nIdx==1){streamTypeName = word;}
-                if(streamTypeName == "physics"){
-                    LOG_ERROR << "StRHICfEventMaker::openWrite() -- Files has not RHICf stream!!! (" << wordPaths[wordSize-1] << ")" << endm;
-                    return kStErr;
-                }
                 // find a runnumber 
                 if(nIdx==2){
                     if(word!="adc"){runNumber = word;}
@@ -394,9 +386,12 @@ Int_t StRHICfEventMaker::eventData()
 
     // General event information
     StRunInfo runInfo = muEvent->runInfo(); 
+    StEventInfo eventInfo = muEvent->eventInfo();
+
     Int_t fillNum = runInfo.beamFillNumber(blue); // star fill number
     Int_t runNum = muEvent->runNumber();
     Int_t eventNum = muEvent->eventId();
+    Int_t eventTime = eventInfo.time();
     Int_t bunch7Bit = trigData->bunchId7Bit();
     Double_t beamEnergy = runInfo.beamEnergy(StBeamDirection::blue); // [GeV] at COM system
     Int_t spinBit = 0;
@@ -415,23 +410,57 @@ Int_t StRHICfEventMaker::eventData()
         if(bluePatt == -1 && yellowPatt == -1){spinBit = 10;}
     }
 
-    // =================== Trigger information ======================
-    Bool_t isRHICf = muEvent->triggerIdCollection().nominal().isTrigger(590901);
-    Bool_t isDiffractive = muEvent->triggerIdCollection().nominal().isTrigger(590902);
-    Bool_t isVPD = muEvent->triggerIdCollection().nominal().isTrigger(590903);
-    Bool_t isTPC = muEvent->triggerIdCollection().nominal().isTrigger(590904);
-
     mRHICfEvent = mRHICfEventDst -> GetEvent();
     mRHICfEvent -> SetRunNumber(runNum);
     mRHICfEvent -> SetEventNumber(eventNum);
+    mRHICfEvent -> SetEventTime(eventTime);
     mRHICfEvent -> SetFillNumber(fillNum);
     mRHICfEvent -> SetBunchNumber(bunch7Bit);
     mRHICfEvent -> SetSpinBit(spinBit);
     mRHICfEvent -> SetBeamEnergy(beamEnergy);
-    mRHICfEvent -> SetRHICfTrig(isRHICf);
-    mRHICfEvent -> SetDiffractiveTrig(isDiffractive);
-    mRHICfEvent -> SetVPDMB30Trig(isVPD);
-    mRHICfEvent -> SetTPCTrig(isTPC);
+
+    // =================== Trigger information ======================
+    Bool_t trigRHICf = muEvent->triggerIdCollection().nominal().isTrigger(590901);
+    Bool_t trigRHICfDiffractive = muEvent->triggerIdCollection().nominal().isTrigger(590902);
+    Bool_t trigRHICfVPDMB30 = muEvent->triggerIdCollection().nominal().isTrigger(590903);
+    Bool_t trigRHICfTPC = muEvent->triggerIdCollection().nominal().isTrigger(590904);
+    Bool_t trigRPSDT = muEvent->triggerIdCollection().nominal().isTrigger(590703);
+    Bool_t trigRPET = muEvent->triggerIdCollection().nominal().isTrigger(590709);
+    Bool_t trigRPCPTnoBBCL = muEvent->triggerIdCollection().nominal().isTrigger(590708);
+    Bool_t trigRPCPT2 = muEvent->triggerIdCollection().nominal().isTrigger(590701);
+    Bool_t trigRPCPT2BBCL = muEvent->triggerIdCollection().nominal().isTrigger(590705);
+    Bool_t trigVPDMB30 = muEvent->triggerIdCollection().nominal().isTrigger(590001);
+    Bool_t trigVPDMB100 = muEvent->triggerIdCollection().nominal().isTrigger(590002);
+    Bool_t trigBHT3 = muEvent->triggerIdCollection().nominal().isTrigger(590201);
+    Bool_t trigTofHighMult = muEvent->triggerIdCollection().nominal().isTrigger(590801);
+    Bool_t trigEPD = muEvent->triggerIdCollection().nominal().isTrigger(25);
+    Bool_t trigBBC = muEvent->triggerIdCollection().nominal().isTrigger(590006);
+    Bool_t trigBBCTac = muEvent->triggerIdCollection().nominal().isTrigger(590007);
+    Bool_t trigZDC = muEvent->triggerIdCollection().nominal().isTrigger(590004);
+    Bool_t trigZDCTac = muEvent->triggerIdCollection().nominal().isTrigger(590005);
+    Bool_t trigVPD = muEvent->triggerIdCollection().nominal().isTrigger(590009);
+    Bool_t trigZeroBias = muEvent->triggerIdCollection().nominal().isTrigger(9300);
+
+    mRHICfEvent -> SetRHICfTrig(trigRHICf);
+    mRHICfEvent -> SetRHICfDiffractiveTrig(trigRHICfDiffractive);
+    mRHICfEvent -> SetRHICfVPDMB30Trig(trigRHICfVPDMB30);
+    mRHICfEvent -> SetRHICfTPCTrig(trigRHICfTPC);
+    mRHICfEvent -> SetRPSDTTrig(trigRPSDT);
+    mRHICfEvent -> SetRPETTrig(trigRPET);
+    mRHICfEvent -> SetRPCPTnoBBCLTrig(trigRPCPTnoBBCL);
+    mRHICfEvent -> SetRPCPT2Trig(trigRPCPT2);
+    mRHICfEvent -> SetRPCPT2noBBCLTrig(trigRPCPT2BBCL);
+    mRHICfEvent -> SetVPDMB30Trig(trigVPDMB30);
+    mRHICfEvent -> SetVPDMB100Trig(trigVPDMB100);
+    mRHICfEvent -> SetBHT3Trig(trigBHT3);
+    mRHICfEvent -> SetTofHighMultTrig(trigTofHighMult);
+    mRHICfEvent -> SetEPDTrig(trigEPD);
+    mRHICfEvent -> SetBBCTrig(trigBBC);
+    mRHICfEvent -> SetBBCTacTrig(trigBBCTac);
+    mRHICfEvent -> SetZDCTrig(trigZDC);
+    mRHICfEvent -> SetZDCTacTrig(trigZDCTac);
+    mRHICfEvent -> SetVPDTrig(trigVPD);
+    mRHICfEvent -> SetZeroBiasTrig(trigZeroBias);
 
     mRHICfEvent -> SetRHICfRunNumber(muRHICfRawHit -> getRHICfRunNumber());
     mRHICfEvent -> SetRHICfEventNumber(muRHICfRawHit -> getRHICfEventNumber());
@@ -443,25 +472,55 @@ Int_t StRHICfEventMaker::eventData()
     mRHICfEvent -> SetRefMult(muEvent->refMult());
     mRHICfEvent -> SetGRefMult(muEvent->grefmult());
 
-    for(int it=0; it<kTowerNum; it++){
-        double l20 = muRHICfHit->getL20(it);
-        double l90 = muRHICfHit->getL90(it);
-        mRHICfEvent -> SetRHICfL20(it, l20);
-        mRHICfEvent -> SetRHICfL90(it, l90);
-    }
-
     return kStOk;
 }
 
 Int_t StRHICfEventMaker::rhicfData()
 {
-    // store all photon data in temporary structure
+    // RHICfDetHit
+    mRHICfDetHit = mRHICfEventDst -> GetRHICfDetHit();
+    for(int it=0; it<kTowerNum; it++){
+        double l20 = muRHICfHit->getL20(it);
+        double l90 = muRHICfHit->getL90(it);
+
+        mRHICfDetHit -> SetL20(it, l20);
+        mRHICfDetHit -> SetL90(it, l90);
+
+        for(int ip=0; ip<kPlateNum; ip++){
+            mRHICfDetHit -> SetPlateEnergy(it, ip, muRHICfHit->getPlateEnergy(it, ip));
+        }
+
+        for(int io=0; io<2; io++){
+            mRHICfDetHit -> SetGSOBarMaxLayer(it, io, muRHICfHit->getGSOMaxLayer(it, io));
+        }
+
+        // Result of Tower's hit number
+        mRHICfDetHit -> SetResultHitNum(it, muRHICfHit->getMultiHitNum(it)); 
+
+        for(int il=0; il<kLayerNum; il++){
+            for(int ixy=0; ixy<kXYNum; ixy++){
+                mRHICfDetHit -> SetEvalHitNum(it , il, ixy, muRHICfHit->getSingleHitNum(it, il, ixy));
+
+                Float_t singlePos = muRHICfHit -> getSingleHitPos(it, il, ixy);
+                Float_t singleHeight = muRHICfHit -> getSinglePeakHeight(it, il, ixy);
+                mRHICfDetHit -> SetSingleHit(it , il, ixy, singlePos, singleHeight);
+
+                for(int io=0; io<2; io++){
+                    Float_t multiPos = muRHICfHit -> getMultiHitPos(it, il, ixy, io);
+                    Float_t multiHeight = muRHICfHit -> getMultiPeakHeight(it, il, ixy, io);
+                    mRHICfDetHit -> SetMultiHit(it, il, ixy, io, multiPos, multiHeight);
+                }
+            }
+        }
+    }
+
+    // RHICfDetPoint
     Int_t rhicfPointNum = muRHICfColl->numberOfPoints();
     for(int classNum = 0; classNum<rhicfPointNum; classNum++){
         StMuRHICfPoint* muRHICfPoint = muRHICfColl->getPoint(classNum);
 
         // After event cut for analysis
-        if(!eventCut(muRHICfPoint)){continue;}
+        if(!rhicfPointCut(muRHICfPoint)){continue;}
 
         int rhicfDetPointNum = mRHICfEventDst -> GetRHICfDetPointNum();
         mRHICfDetPoint = mRHICfEventDst -> GetRHICfDetPoint(rhicfDetPointNum);
@@ -469,12 +528,6 @@ Int_t StRHICfEventMaker::rhicfData()
         mRHICfDetPoint -> SetPID(muRHICfPoint -> getPID());
         mRHICfDetPoint -> SetPointPos(muRHICfPoint -> getPointPos(0), muRHICfPoint -> getPointPos(1));
         mRHICfDetPoint -> SetPointEnergy(muRHICfPoint -> getPointEnergy(0), muRHICfPoint -> getPointEnergy(1));  
-        mRHICfDetPoint -> SetTowerSumEnergy(muRHICfPoint -> getTowerSumEnergy(0) , muRHICfPoint -> getTowerSumEnergy(1));
-    }
-
-    if(mRHICfEventDst -> GetRHICfDetPointNum() > 0){
-        convertIPSystem(true, false); // Convert the coordinate system from RHICf tower origin to Collision Point
-        kinematics();                 // Calculate the Kinematics and various values for Pi0
     }
 
     return kStOk;
@@ -857,12 +910,16 @@ Int_t StRHICfEventMaker::rpsData()
     return kStOk;
 }
 
-Bool_t StRHICfEventMaker::eventCut(StMuRHICfPoint* point)
+Bool_t StRHICfEventMaker::rhicfPointCut(StMuRHICfPoint* point)
 {
     const Float_t geometryCut = 2.; // [mm]
     const Float_t energyCut = 20.; // [GeV]
 
-    if(point->getPointEnergy(0) < energyCut){return false;} // Energy cut, if energy lower than 20 GeV
+    // Energy cut, if energy lower than 20 GeV
+    int pid = point->getPID();
+    if(pid == 0 && point->getPointEnergy(0) < energyCut){return false;}
+    if(pid == 1 && point->getPointEnergy(1) < energyCut){return false;} 
+
     double towerSize = double(checkGSOBarSize(point->getTowerIdx())); 
 
     Double_t x = point -> getPointPos(0);
@@ -871,145 +928,6 @@ Bool_t StRHICfEventMaker::eventCut(StMuRHICfPoint* point)
     if(y > towerSize-geometryCut || y < geometryCut){return false;} // Position cut, if y is out of cutting range 
 
     return true;
-}
-
-void StRHICfEventMaker::convertIPSystem(bool metOpt, bool referOpt)
-{
-    // for convert Collision Point system, define the system in TS origin
-    Int_t TowerIdxByRunType = -999;
-    Double_t distOriginToOrigin = distTStoTL - TMath::Sqrt(2.)*geoCenterTL + TMath::Sqrt(2.)*geoCenterTS;
-    Double_t beamCenterX = beamCenterPosition(0, metOpt, referOpt);
-    Double_t beamCenterY = beamCenterPosition(1, metOpt, referOpt);
-
-    int runType = mRHICfEvent -> GetRHICfRunType();
-    if(runType == kRHICfTL){
-        TowerIdxByRunType = 1;
-        beamCenterY = beamCenterY + TMath::Sqrt(2.)*geoCenterTL;
-    }
-    if(runType == kRHICfTS || runType == kRHICfTOP){
-        TowerIdxByRunType = 0;
-        beamCenterY = beamCenterY + TMath::Sqrt(2.)*geoCenterTS;
-    }
-
-    int detPointNum = mRHICfEventDst -> GetRHICfDetPointNum();
-    for(int i=0; i<detPointNum; i++){
-        mRHICfDetPoint = mRHICfEventDst -> GetRHICfDetPoint(i);
-        double posX = mRHICfDetPoint -> GetPointPos(0);
-        double posY = mRHICfDetPoint -> GetPointPos(1);
-
-        // the Hit Position convert to one tower coordinate
-        if(TowerIdxByRunType == 0 && mRHICfDetPoint -> GetTowerIdx() == 1){
-            posX += distOriginToOrigin/TMath::Sqrt(2.);
-            posY += distOriginToOrigin/TMath::Sqrt(2.);
-        }
-        if(TowerIdxByRunType == 1 && mRHICfDetPoint -> GetTowerIdx() == 0){
-            posX -= distOriginToOrigin/TMath::Sqrt(2.);
-            posY -= distOriginToOrigin/TMath::Sqrt(2.);
-        }
-
-        // Hit position rotate to -45 degree.
-        double tmpPosX = (posX - posY)/TMath::Sqrt(2.);
-        double tmpPosY = (posX + posY)/TMath::Sqrt(2.);
-
-        // convert to beam center and IP system [m]
-        posX = (tmpPosX - beamCenterX)*0.001;
-        posY = (tmpPosY - beamCenterY)*0.001;
-
-        mRHICfDetPoint -> SetPointPos(posX, posY);
-    }
-}
-
-void StRHICfEventMaker::kinematics()
-{
-    // Note: Lambda and mixing point selection method will be updated. 2025/Jan/28
-    // for Pi0
-    if(mRHICfEventDst -> GetRHICfDetPointNum() == 2){
-        const Float_t l90LowerCut = 8.;
-        const Float_t l90UpperCut = 18.;
-
-        mRHICfDetPoint = mRHICfEventDst -> GetRHICfDetPoint(0);
-        int towerIdx1 = mRHICfDetPoint -> GetTowerIdx();
-        double x1 = mRHICfDetPoint -> GetPointPos(0); // [m]
-        double y1 = mRHICfDetPoint -> GetPointPos(1); // [m]
-        double e1 = mRHICfDetPoint -> GetPointEnergy(0); // [GeV]
-
-        mRHICfDetPoint = mRHICfEventDst -> GetRHICfDetPoint(1);
-        int towerIdx2 = mRHICfDetPoint -> GetTowerIdx();
-        double x2 = mRHICfDetPoint -> GetPointPos(0); // [m]
-        double y2 = mRHICfDetPoint -> GetPointPos(1); // [m]
-        double e2 = mRHICfDetPoint -> GetPointEnergy(0); // [GeV]
-
-        double l90_tower1 = mRHICfEvent -> GetRHICfL90(towerIdx1);
-        double l90_tower2 = mRHICfEvent -> GetRHICfL90(towerIdx2);
-
-        if((l90LowerCut <= l90_tower1 && l90_tower1 <= l90UpperCut) && (l90LowerCut <= l90_tower2 && l90_tower2 <= l90UpperCut)){
-            int towerIdx = -1;
-            int pi0Type = -1;
-            if(towerIdx1 == towerIdx2){
-                if(x1 != x2 && y1 != y2){
-                    pi0Type = 2;
-                    towerIdx = towerIdx1;
-                }
-            }
-            else{pi0Type = 1;}
-
-            if(pi0Type > 0){
-                Double_t z = distZatIP*0.001;
-                double r1 = sqrt(x1*x1 + y1*y1 + z*z);
-                double r2 = sqrt(x2*x2 + y2*y2 + z*z);
-
-                double e = e1 + e2;
-                
-                double px = (x1/r1)*e1 + (x2/r2)*e2; 
-                double py = (y1/r1)*e1 + (y2/r2)*e2; 
-                double pz = (z/r1)*e1 + (z/r2)*e2; 
-                
-                double mass = sqrt(e*e - px*px - py*py - pz*pz)*1000.;
-
-                int particleNum = mRHICfEventDst -> GetRHICfParticleNum();
-                mRHICfParticle = mRHICfEventDst -> GetRHICfParticle(particleNum);
-                mRHICfParticle -> SetPID(kPi0);
-                mRHICfParticle -> SetPi0Type(pi0Type);
-                mRHICfParticle -> SetTowerIdx(towerIdx);
-                mRHICfParticle -> SetRHICfHitPos(x1+x2, y1+y2, z); // [m]
-                mRHICfParticle -> SetMomentum(px, py, pz); // [GeV/c]
-                mRHICfParticle -> SetEnergy(e); // [GeV]
-                mRHICfParticle -> SetMass(mass); // [MeV/c^2]
-            }
-        }
-    }
-    // for Neutron
-    if(mRHICfEventDst -> GetRHICfDetPointNum() == 1){
-        const Float_t l90Cut = 20.; 
-
-        mRHICfDetPoint = mRHICfEventDst -> GetRHICfDetPoint(0);
-        int towerIdx = mRHICfDetPoint -> GetTowerIdx();
-        double x = mRHICfDetPoint -> GetPointPos(0); // [m]
-        double y = mRHICfDetPoint -> GetPointPos(1); // [m]
-        double e = mRHICfDetPoint -> GetPointEnergy(1); // [GeV]
-
-        double l90 = mRHICfEvent -> GetRHICfL90(towerIdx);
-        if(l90 > l90Cut){
-            Double_t z = distZatIP*0.001;
-            double r = sqrt(x*x + y*y + z*z); 
-
-            double mass = 0.939565; 
-            double p = sqrt(e*e - mass*mass); 
-            double px = p*(x/r); 
-            double py = p*(y/r); 
-            double pz = p*(z/r); 
-
-            int particleNum = mRHICfEventDst -> GetRHICfParticleNum();
-            mRHICfParticle = mRHICfEventDst -> GetRHICfParticle(particleNum);
-            mRHICfParticle -> SetPID(kNeutron);
-            mRHICfParticle -> SetPi0Type(-1);
-            mRHICfParticle -> SetTowerIdx(towerIdx);
-            mRHICfParticle -> SetRHICfHitPos(x, y, z); // [m]
-            mRHICfParticle -> SetMomentum(px, py, pz); // [GeV/c]
-            mRHICfParticle -> SetEnergy(e); // [GeV]
-            mRHICfParticle -> SetMass(mass); // [MeV/c^2]
-        }
-    }
 }
 
 void StRHICfEventMaker::spinPatternData()
@@ -1041,93 +959,11 @@ void StRHICfEventMaker::spinPatternData()
     }
 }
 
-Double_t StRHICfEventMaker::beamCenterPosition( int xy, bool metOpt, bool referOpt)
-{
-    if(mRHICfEvent -> GetRHICfRunType() == kRHICfTL){
-        if(mRHICfEvent -> GetFillNumber() == fillNumArray[0]){
-            if(metOpt==0){
-                if(xy==0){return 0.;}
-                else if(xy==1){return 2.21;}
-            }
-            else if(metOpt==1){
-                if(xy==0){return 0.66;}
-                else if(xy==1){return 1.37;}
-            }
-        }
-        else if(mRHICfEvent -> GetFillNumber() == fillNumArray[1]){
-            if(metOpt==0){
-                if(xy==0){return 0.;}
-                else if(xy==1){return 2.31;}
-            }
-            else if(metOpt==1){
-                if(xy==0){return 0.22;}
-                else if(xy==1){return 1.55;}
-            }
-        }
-    }
-    else if(mRHICfEvent -> GetRHICfRunType() == kRHICfTS){
-        if(mRHICfEvent -> GetFillNumber() == fillNumArray[2]){
-            if(metOpt==0){
-                if(xy==0){return 0.;}
-                else if(xy==1){return 2.36;}
-            }
-            else if(metOpt==1){
-                if(xy==0){return 0.22;}
-                else if(xy==1){return 1.37;}
-            }
-        }
-        else if(mRHICfEvent -> GetFillNumber() == fillNumArray[4]){
-            if(metOpt==0){
-                if(xy==0){return 0.;}
-                else if(xy==1){return 2.33;}
-            }
-            else if(metOpt==1){
-                if(xy==0){return 0.22;}
-                else if(xy==1){return 1.55;}
-            }
-        }
-    }
-    else if(mRHICfEvent -> GetRHICfRunType() == kRHICfTOP){
-        if(referOpt == 0){ // refer to fill 21148
-            if(metOpt==0){
-                if(xy==0){return 0.;}
-                else if(xy==1){return -21.67;}
-            }
-            else if(metOpt==1){
-                if(xy==0){return 0.22;}
-                else if(xy==1){return -22.66;}
-            }
-        }
-        if(referOpt == 1){ // refer to fill 21150
-            if(metOpt==0){
-                if(xy==0){return 0.;}
-                else if(xy==1){return -21.71;}
-            }
-            else if(metOpt==1){
-                if(xy==0){return 0.22;}
-                else if(xy==1){return -22.48;}
-            }
-        }
-    }
-    return 0.;
-}
-
 Int_t  StRHICfEventMaker::eventSummary()
 {
     LOG_INFO << "StRHICfEventMaker::eventSummary() -- Saved Event number: " << iEvent << endm;
 
-    // RHICf parts
-    int pi0Num = 0;
-    int neuNum = 0;
-    for(int i=0; i<mRHICfEventDst->GetRHICfParticleNum(); i++){
-        mRHICfParticle = mRHICfEventDst->GetRHICfParticle(i);
-        int pid = mRHICfParticle -> GetPID();
-        if(pid == kPi0){pi0Num++;}
-        if(pid == kNeutron){neuNum++;}
-    }
-    
     LOG_INFO << "* Number of RHICf Detector point: " << mRHICfEventDst->GetRHICfDetPointNum() << endm;
-    LOG_INFO << "* RHICf particles, Pi0: " << pi0Num << ", Neutron: " << neuNum << endm;
 
     // Vertex
     LOG_INFO << "* Primary vertex: (" << mRHICfEvent->GetPrimaryVtxX() << ", " << mRHICfEvent->GetPrimaryVtxY() << ", " <<  mRHICfEvent->GetPrimaryVtxZ() << ") " << endm;

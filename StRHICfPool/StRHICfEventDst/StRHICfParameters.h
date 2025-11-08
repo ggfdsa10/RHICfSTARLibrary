@@ -60,7 +60,7 @@ enum RHICfPar{
 
 enum ZDCPar{
     kZDCPmtNum = 3,
-    kSMDNum = 7
+    kSMDNum = 8
 };
 
 enum RPSPar{

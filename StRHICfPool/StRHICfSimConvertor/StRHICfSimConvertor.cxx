@@ -150,6 +150,14 @@ Int_t StRHICfSimConvertor::InitMuDst2SimDst()
                 LOG_ERROR << "StRHICfSimConvertor::InitMuDst2SimDst() -- Can not find a event generator type !!!" << endm;
                 return kStFatal;
             }
+
+            if(muDstFile.Index("TL") != -1){mRHICfRunType = rTLtype;}
+            else if(muDstFile.Index("TS") != -1){mRHICfRunType = rTStype;}
+            else if(muDstFile.Index("TOP") != -1){mRHICfRunType = rTOPtype;}
+            else{
+                LOG_ERROR << "StRHICfSimConvertor::InitMuDst2SimDst() -- Can not find a RHICf run type !!!" << endm;
+                return kStFatal;
+            }
         }
     }
 
@@ -222,8 +230,11 @@ Int_t StRHICfSimConvertor::InitSimRecoMode()
 Int_t StRHICfSimConvertor::ConvertMuDst2SimDst()
 {
     mSimDst -> Clear();
-    mRHICfGammaIdx.clear();
-    mRHICfNeuIdx.clear();
+    mParticleIdx.clear();
+
+    double trkMom[3];
+    double trkVtxStart[3];
+    double trkVtxEnd[3];
 
     // =================== DST Set up ======================
     mMuDst = (StMuDst*) GetInputDS("MuDst"); // from DST
@@ -240,79 +251,92 @@ Int_t StRHICfSimConvertor::ConvertMuDst2SimDst()
     mSimEvent -> SetRHICfRunType(mRHICfRunType);
     if(mGeneratorIdx < rGeneratorNum){mSimEvent -> SetGeneratorIdx(mGeneratorIdx);}
 
-    // ======================= Get MuMcTrack ============================
+    // ======================= Get MuMcTrack and Save RHICfSimTrack ============================
     mMcVtxArray = mMuDst -> mcArray(0);
     mMcTrkArray = mMuDst -> mcArray(1); 
 
+    int RHICfParticleNum = 0;
     int primaryTrkNum = 0;
     int propagatedTrkNum = 0;
     int mcTrkNum = mMcTrkArray -> GetEntriesFast();
     for(int i=0; i<mcTrkNum; i++){
+        memset(trkMom, 0., sizeof(trkMom));
+        memset(trkVtxStart, 0., sizeof(trkVtxStart));
+        fill_n(&trkVtxEnd[0], 3, -9999.);
+
+        // Set the first mcTrack loop
         mMcTrk = (StMuMcTrack*)mMcTrkArray -> UncheckedAt(i);
-        int VtxIdStart = mMcTrk -> IdVx();
-        int VtxIdEnd = mMcTrk -> IdVxEnd();
-        bool isPrimary = (VtxIdStart == 1)? true : false;
-        if(isPrimary){primaryTrkNum++;}
 
-        double posStart[3];
-        mMcVtx = (StMuMcVertex*)mMcVtxArray -> UncheckedAt(VtxIdStart-1);
-        posStart[0] = mMcVtx->XyzV().x();
-        posStart[1] = mMcVtx->XyzV().y();
-        posStart[2] = mMcVtx->XyzV().z();
-
-        int parentTrkId = mMcVtx -> IdParTrk() - 1; // starting of parentTrk Id from 0 index
-        int daughterNum = mMcVtx -> NoDaughters();
-
-        double posEnd[3] = {-9999., -9999., -9999.};
-        if(VtxIdEnd != 0){
-            mMcVtx = (StMuMcVertex*)mMcVtxArray -> UncheckedAt(VtxIdEnd-1);
-            posEnd[0] = mMcVtx->XyzV().x();
-            posEnd[1] = mMcVtx->XyzV().y();
-            posEnd[2] = mMcVtx->XyzV().z();
-        }
-
-        int trkId = mMcTrk -> Id() -1; // starting of track Id from 0 index
         int gePid = mMcTrk -> GePid();
         int pid = GetGePid2PDG(gePid);
         if(pid == 0){continue;} // for invaild PDG Encoding
         
-        double energy = mMcTrk -> E();
-        double mom[3];
-        mom[0] = mMcTrk -> Pxyz().x();
-        mom[1] = mMcTrk -> Pxyz().y();
-        mom[2] = mMcTrk -> Pxyz().z();
+        int trkId = mMcTrk -> Id() -1; // starting of track Id from 0 index
+        int VtxIdStart = mMcTrk -> IdVx();
+        int VtxIdEnd = mMcTrk -> IdVxEnd();
 
-        // Save track info into StRHICfSimTrack
-        mSimTrk = mSimDst -> GetSimTrack(mSimDst->GetSimTrackNum());
-        mSimTrk -> SetId(trkId);
-        mSimTrk -> SetPid(pid);
-        mSimTrk -> SetParentId(parentTrkId);
-        mSimTrk -> SetDaughterNum(daughterNum);
-        mSimTrk -> SetEnergy(energy);
-        mSimTrk -> SetMomentum(mom[0], mom[1], mom[2]);   
-        mSimTrk -> SetVertexStart(posStart[0], posStart[1], posStart[2]);
-        mSimTrk -> SetVertexEnd(posEnd[0], posEnd[1], posEnd[2]);
-        if(isPrimary){mSimTrk -> SetIsPrimary();}
-        
-        if(IsSimPropagate(mSimTrk)){
-            mSimTrk->SetIsSimPropagate();
-            propagatedTrkNum++;
+        double energy = mMcTrk -> E();
+        trkMom[0] = mMcTrk -> Pxyz().x();
+        trkMom[1] = mMcTrk -> Pxyz().y();
+        trkMom[2] = mMcTrk -> Pxyz().z();
+
+        mMcVtx = (StMuMcVertex*)mMcVtxArray -> UncheckedAt(VtxIdStart-1);
+        trkVtxStart[0] = mMcVtx->XyzV().x();
+        trkVtxStart[1] = mMcVtx->XyzV().y();
+        trkVtxStart[2] = mMcVtx->XyzV().z();
+
+        int parentTrkId = mMcVtx -> IdParTrk() - 1; // starting of parentTrk Id from 0 index
+        int daughterNum = mMcVtx -> NoDaughters();
+
+        if(VtxIdEnd != 0){
+            mMcVtx = (StMuMcVertex*)mMcVtxArray -> UncheckedAt(VtxIdEnd-1);
+            trkVtxEnd[0] = mMcVtx->XyzV().x();
+            trkVtxEnd[1] = mMcVtx->XyzV().y();
+            trkVtxEnd[2] = mMcVtx->XyzV().z();
         }
 
-        // find a RHICf gamma or neutron
-        if(pid == 22 || pid == 2112){
-            int hit = GetRHICfGeoHit(posStart[0], posStart[1], posStart[2], mom[0], mom[1], mom[2], energy);
-            if(hit != -1){
-                if(pid == 22){mRHICfGammaIdx.push_back(mSimDst->GetSimTrackNum()-1);} // gamma
-                if(pid == 2112){
-                    mRHICfNeuIdx.push_back(mSimDst->GetSimTrackNum()-1);} // neutron
+        // Check the saving condition
+        bool isPrimary = (VtxIdStart == 1)? true : false;
+        bool isPropagate = IsSimPropagate(trkVtxStart, trkVtxEnd, trkMom);
+        int rhicfHit = GetRHICfGeoHit(trkVtxStart, trkVtxEnd, trkMom, energy, gePid);
+
+        // Save track data
+        if(isPrimary || isPropagate || rhicfHit != -1){
+            int simTrkId = mSimDst->GetSimTrackNum();
+            mSimTrk = mSimDst -> GetSimTrack(simTrkId);
+            mSimTrk -> SetId(simTrkId);
+            mSimTrk -> SetPid(pid);
+            mSimTrk -> SetParentId(-1);
+            mSimTrk -> SetDaughterNum(daughterNum);
+            mSimTrk -> SetEnergy(energy);
+            mSimTrk -> SetMomentum(trkMom[0], trkMom[1], trkMom[2]);   
+            mSimTrk -> SetVertexStart(trkVtxStart[0], trkVtxStart[1], trkVtxStart[2]);
+            mSimTrk -> SetVertexEnd(trkVtxEnd[0], trkVtxEnd[1], trkVtxEnd[2]);
+            mSimTrk -> SetIsFinal();
+            if(isPrimary){
+                mSimTrk -> SetIsPrimary();
+                primaryTrkNum++;
+            }
+            if(isPropagate){
+                mSimTrk->SetIsSimPropagate();
+                propagatedTrkNum++;
+            }
+            if(rhicfHit != -1 || isPrimary){
+                mParticleIdx.push_back(simTrkId);
+            }
+            if(rhicfHit != -1){
+                mSimTrk->SetIsRHICfHit();
+                RHICfParticleNum++;
             }
         }
     }
 
-    mSimEvent -> SetPrimaryTrkNum(primaryTrkNum);
+    // ======================= Make Generate event data =======================
+    GetGenEventData();
 
-    GetGeneratorData();
+    for(int i=0; i<mSimDst->GetSimTrackNum(); i++){
+        mSimTrk = mSimDst -> GetSimTrack(i);
+    }
 
     // ======================= Get BBC ============================
     mSimBBC = mSimDst -> GetSimBBC();
@@ -353,18 +377,24 @@ Int_t StRHICfSimConvertor::ConvertMuDst2SimDst()
         mSimBTof -> SetSimTrkId(idTruth);
     }
 
-    mSimDstTree -> Fill();
+    mSimEvent -> SetPrimaryTrkNum(primaryTrkNum);
 
-    // Event Summary print
-    LOG_INFO << "StRHICfSimConvertor::ConvertMuDst2SimDst() -- Event Summary" << endm;
-    LOG_INFO << "Process Id: " << mSimEvent -> GetProcessId() << endm;
-    LOG_INFO << "Primary Trk Num: " << mSimEvent->GetPrimaryTrkNum() << ", Generate level Priamry Trk Num: " << mSimEvent->GetGenFinalParNum() << ",  Propagated Trk Num: " << propagatedTrkNum << endm;
-    LOG_INFO << "RHICf Gamma Num: " << mRHICfGammaIdx.size() << ",  RHICf Neutron Num: " << mRHICfNeuIdx.size() << endm;
+    // Saved data
+    if(propagatedTrkNum > 1 || RHICfParticleNum != 0){
+        mSimDstTree -> Fill();
+
+        // Event Summary print
+        LOG_INFO << "StRHICfSimConvertor -- Event Summary --" << endm;
+        LOG_INFO << " ----- Process Id: " << mSimEvent -> GetProcessId() << endm;
+        LOG_INFO << " ----- Primary Trk Num: " << mSimEvent->GetPrimaryTrkNum() << ", Generate Trk Num: " << mSimEvent->GetGenFinalParNum() << ", Propagated Trk Num: " << propagatedTrkNum << endm;
+        LOG_INFO << " ----- RHICf Truth Trk Num: " << RHICfParticleNum << endm;
+    }
+
 
     return kStOk;
 }
 
-Int_t StRHICfSimConvertor::GetGeneratorData()
+Int_t StRHICfSimConvertor::GetGenEventData()
 {
     int simDstEvent = mSimEvent -> GetEventNumber();
 
@@ -403,12 +433,8 @@ Int_t StRHICfSimConvertor::GetGeneratorData()
             mSimEvent -> SetuHat(uHat);
             mSimEvent -> SetPtHat(ptHat);
 
-            // Find a RHICf particle mothers
-            vector<pair<int, int>> pairRHICfParticles;
-
-            int RHICfGammaNum = mRHICfGammaIdx.size();
-            int RHICfNeuNum = mRHICfNeuIdx.size();
-            int totalRHICfParNum  = RHICfGammaNum + RHICfNeuNum;
+            // Find a particle mothers
+            vector<pair<int, int>> pairParticles;
 
             int parNum = mGenEvent -> GetNumberOfParticles();
             for(int par=0; par<parNum; par++){
@@ -446,99 +472,97 @@ Int_t StRHICfSimConvertor::GetGeneratorData()
                     }
                 }
 
-                if(pid != 22 && pid != 2112){continue;}
-
-                int genPtInt = int(mGenParticle -> pt()*10000);
+                // GenTrack match to SimTrack 
                 int genEnergyInt = int(mGenParticle -> GetEnergy()*100);
+                int genPtInt = int(mGenParticle -> pt()*10000);
 
-                for(int r=0; r<totalRHICfParNum; r++){
-                    int simTrkIdx = (r < RHICfGammaNum)? mRHICfGammaIdx[r] : mRHICfNeuIdx[r-RHICfGammaNum];
-                    mSimTrk = mSimDst -> GetSimTrack(simTrkIdx);
+                int matchingParNum = mParticleIdx.size();
+                if(int(pairParticles.size()) == matchingParNum){continue;}
 
+                for(int r=0; r<matchingParNum; r++){
+                    mSimTrk = mSimDst -> GetSimTrack(mParticleIdx[r]);
+                    int simTrkPid = mSimTrk->GetPid();
                     double px = mSimTrk -> GetPx();
                     double py = mSimTrk -> GetPy();
+                    double e = mSimTrk -> GetE();
+                    
+                    int simTrkEnergyInt = int(e*100);
                     int simTrkPtInt = int(sqrt(px*px + py*py)*10000);
-                    int simTrkEnergyInt = int(mSimTrk->GetE()*100);
-                    int simTrkPid = mSimTrk -> GetPid();
 
                     // Getting the same RHICf particle 
-                    if(genEnergyInt == simTrkEnergyInt && genPtInt == simTrkPtInt && pid == simTrkPid){
-                        pairRHICfParticles.push_back(make_pair(simTrkIdx, par));
+                    if(pid == simTrkPid && genEnergyInt == simTrkEnergyInt && genPtInt == simTrkPtInt ){
+                        pairParticles.push_back(make_pair(mParticleIdx[r], par));
                     }
                 }
-                if(int(pairRHICfParticles.size()) == totalRHICfParNum){break;}
             }
 
             // Set the generator level number of particles
             mSimEvent -> SetGenFinalParNum(finalParNum);
             mSimEvent -> SetGenFinalChargedParNum(finalChargedParNum);
 
-            if(pairRHICfParticles.size() == 0){break;}
+            // Find a parent particles for RHICf particles
+            vector<pair<int, int>> tmpSavedTrackId; // [gen track id, sim track id]
+            int pairParticleNum = pairParticles.size();
 
-            int tmpSimTrkNum = mSimDst -> GetSimTrackNum();
-            for(int i=0; i<totalRHICfParNum; i++){
-                int simTrkIdx = pairRHICfParticles[i].first;
-                int genParIdx = pairRHICfParticles[i].second;
+            for(int i=0; i<pairParticleNum; i++){
+                int simTrkIdx = pairParticles[i].first;
+                int genParIdx = pairParticles[i].second;
 
-                bool duplicateFlag = false;
                 while(true){
                     mSimTrk = mSimDst -> GetSimTrack(simTrkIdx);
                     int simTrkParentId = mSimTrk -> GetParentId();
 
                     mGenParticle = (*mGenEvent)[genParIdx];
+                    int status = mGenParticle -> GetStatus();
                     int genParentId1 = mGenParticle -> GetFirstMother();
                     int genParentId2 = mGenParticle -> GetLastMother();
 
-                    if(duplicateFlag){duplicateFlag = false; break;}
-                    if(simTrkParentId < 0){
-                        if(genParentId2 != 0){ // primary particle case
+                    if(genParentId2 != 0){ // primary particle case
+                        if(!mSimTrk->IsPrimary()){
                             mSimTrk -> SetIsPrimary();
                             mSimEvent -> SetPrimaryTrkNum(mSimEvent->GetPrimaryTrkNum()+1);
-                            break; 
                         }
-                        else{ // decayed particle case: but MuDst not include mother particle
-                            int motherSimTrkId = mSimDst->GetSimTrackNum();
-                            double StartVx = mSimTrk->GetVxStart();
-                            double StartVy = mSimTrk->GetVyStart();
-                            double StartVz = mSimTrk->GetVzStart();
-
-                            mGenParticle = (*mGenEvent)[genParentId1];
-
-                            // Find the duplicated mother particle in SimTrack
-                            int duplicatedMotherIdx = -1;
-                            int genPID = mGenParticle -> GetId();
-                            int genPtInt = int(mGenParticle -> pt()*10000);
-                            int genEnergyInt = int(mGenParticle -> GetEnergy()*10000);
-
-                            for(int i=tmpSimTrkNum-1; i<mSimDst->GetSimTrackNum(); i++){
-                                mSimTrk = mSimDst -> GetSimTrack(i);
-                                double px = mSimTrk -> GetPx();
-                                double py = mSimTrk -> GetPy();
-                                int simTrkPtInt = int(sqrt(px*px + py*py)*10000);
-                                int simTrkEnergyInt = int(mSimTrk->GetE()*10000);
-                                int simTrkPID = mSimTrk -> GetPid();
-
-                                if(genEnergyInt == simTrkEnergyInt && genPtInt == simTrkPtInt && genPID == simTrkPID){
-                                    duplicatedMotherIdx = i;
+                        break; 
+                    }
+                    else{ // decayed particle 
+                        if(simTrkParentId < 0){ // case: but MuDst not include mother particle, save the parent tracks
+                            // Find a duplicated saving tracks
+                            int existSavedTrkId = -1;
+                            for(int i=0; i<tmpSavedTrackId.size(); i++){
+                                if(genParentId1 == tmpSavedTrackId[i].first){
+                                    existSavedTrkId = tmpSavedTrackId[i].second;
                                     break;
                                 }
                             }
-
-                            mSimTrk = mSimDst -> GetSimTrack(simTrkIdx);
-                            if(duplicatedMotherIdx > 0){
-                                mSimTrk -> SetParentId(duplicatedMotherIdx); 
-                                simTrkIdx = duplicatedMotherIdx;
-                                genParIdx = genParentId1;
-                                duplicateFlag = true;
-                                continue;
-                            }
-                            else{
-                                mSimTrk = mSimDst -> GetSimTrack(simTrkIdx);
-                                mSimTrk -> SetParentId(motherSimTrkId); // for duaghter particle 
+                            // Set the this track's parent id and exit if track id already saved
+                            if(existSavedTrkId != -1){
+                                mSimTrk -> SetParentId(existSavedTrkId); // for duaghter particle 
+                                break;
                             }
 
-                            mSimTrk = mSimDst -> GetSimTrack(motherSimTrkId); // set mother particle
-                            mSimTrk -> SetId(motherSimTrkId);
+                            // Set the final state flag
+                            if(status == 1){mSimTrk -> SetIsFinal();}
+
+                            // Assigned event generator parent track
+                            mGenParticle = (*mGenEvent)[genParentId1];
+
+                            // cut the intemediate tracks
+                            int ParentStatus = mGenParticle -> GetStatus();
+                            if(ParentStatus > 2){break;} 
+
+                            // Set the track's parent
+                            int simTrkNum = mSimDst->GetSimTrackNum();
+                            mSimTrk -> SetParentId(simTrkNum);
+
+                            double StartVx = mSimTrk -> GetVxStart();
+                            double StartVy = mSimTrk -> GetVyStart();
+                            double StartVz = mSimTrk -> GetVzStart();
+
+                            // Make new parent SimTrack
+                            mSimTrk = mSimDst -> GetSimTrack(simTrkNum); // set mother particle
+                            mSimTrk -> SetId(simTrkNum);
+                            mSimTrk -> SetParentId(-1);
+                            if(ParentStatus == 1){mSimTrk -> SetIsFinal();}
                             mSimTrk -> SetPid(mGenParticle->GetId()); 
                             mSimTrk -> SetDaughterNum(2);
                             mSimTrk -> SetEnergy(mGenParticle->GetEnergy());
@@ -552,19 +576,15 @@ Int_t StRHICfSimConvertor::GetGeneratorData()
                             mSimTrk -> SetIsPrimary();
                             mSimEvent -> SetPrimaryTrkNum(mSimEvent->GetPrimaryTrkNum()+1);
 
-                            // set the grandmother particle index
-                            simTrkIdx = motherSimTrkId;
+                            // Next to the grandmother particle
+                            simTrkIdx = simTrkNum;
                             genParIdx = genParentId1;
+
+                            // Push the saved track id 
+                            tmpSavedTrackId.push_back(make_pair(genParentId1, simTrkNum));
                         }
-                    }
-                    else{ // decayed particle case: MuDst have a mother particle
-                        if(genParentId2 != 0){ // primary particle case
-                            mSimTrk -> SetIsPrimary();
-                            mSimEvent -> SetPrimaryTrkNum(mSimEvent->GetPrimaryTrkNum()+1);
-                            break;  
-                        }
-                        else{
-                            // set the grandmother particle index
+                        else{ // case: MuDst have a mother particle
+                            // Next to the grandmother particle
                             simTrkIdx = simTrkParentId;
                             genParIdx = genParentId1;
                         }
@@ -577,47 +597,47 @@ Int_t StRHICfSimConvertor::GetGeneratorData()
     return kStOk;
 }
 
-bool StRHICfSimConvertor::IsSimPropagate(StRHICfSimTrack* simTrk)
+bool StRHICfSimConvertor::IsSimPropagate(double vtxStart[], double vtxEnd[], double mom[])
 {
-    float startVx = simTrk->GetVxStart();
-    float startVy = simTrk->GetVyStart();
-    float startVz = simTrk->GetVzStart();
-    float endVz = simTrk->GetVzEnd();
+    double p = sqrt(mom[0]*mom[0] + mom[1]*mom[1] + mom[2]*mom[2]);
+    double unitX = mom[0]/p;
+    double unitY = mom[1]/p;
+    double unitZ = mom[2]/p;
+
+    double cosTheta = (p == 0.)? 1. : unitZ;
+    double eta = -0.5*TMath::Log((1. - cosTheta)/(1. + cosTheta));
 
     // 1st cut: if track is not alive 
-    if(endVz > -9990.){return false;} 
+    if(vtxEnd[2] > -9990.){return false;} 
 
-    // 2nd cut: if track eta < 5
-    float eta = simTrk -> GetEta();
+    // 2nd cut: x-y starting point larger then world size in RHICf geant4 simulation (tightly 0.5 m)
+    if(fabs(vtxStart[0]) > 50. || fabs(vtxStart[1]) > 50.){return false;}
+
+    // 3rd cut: if track eta < 5
     if(eta < 5){return false;}
 
-    // 3nd cut: startVz larger than 10m (DX magnet)
-    if(startVz > 1000){return false;}
+    // 4th cut: startVz larger than 10m (DX magnet)
+    if(fabs(vtxStart[2]) > 1000.){return false;}
 
-    float px = simTrk->GetPx();
-    float py = simTrk->GetPy();
-    float pz = simTrk->GetPz();
-    float p = sqrt(px*px + py*py + pz*pz);
-
-    float unitX = px/p;
-    float unitY = py/p;
-    float unitZ = pz/p;
-
-    // 4th cut: if Z diraction is negative
+    // 5th cut: if Z diraction is negative
     if(unitZ < 0.){return false;}
 
-    float startR = sqrt(startVx*startVx + startVy*startVy);
+    double startR = sqrt(vtxStart[0]*vtxStart[0] + vtxStart[1]*vtxStart[1]);
     
-    // 5th cut: if startR > DX magnet diameter and unitX and unitY are positive.
+    // 6th cut: if startR > DX magnet diameter and partice going to outer direction
     if(startR > 30.){
-        if(unitX > 0. && unitY > 0.){return false;}
+        if(vtxStart[0] > 0 && unitX > 0){return false;}
+        if(vtxStart[0] < 0 && unitX < 0){return false;}
+        if(vtxStart[1] > 0 && unitY > 0){return false;}
+        if(vtxStart[1] < 0 && unitY < 0){return false;}
     }
-
     return true;
 }
 
 Int_t StRHICfSimConvertor::GetGePid2PDG(int gepid)
 {
+    if(gepid == 4){return 0;} // neutrino case
+    if(gepid == 48){return 0;} // geantino case 
     if(gepid == 45){return 1000010020;} // Deuteron case
     if(gepid == 46){return 1000010030;} // Triron case
     if(gepid == 47){return 1000020040;} // Alpha case
@@ -625,11 +645,34 @@ Int_t StRHICfSimConvertor::GetGePid2PDG(int gepid)
     return mDatabasePDG -> ConvertGeant3ToPdg(gepid);
 }
 
+Bool_t StRHICfSimConvertor::IsNeutral(int gepid)
+{
+    switch(gepid)
+  {
+    case 14 : return false; // p
+    case 2  : return false; // e+
+    case 3  : return false; // e-
+    case 11 : return false; // K+
+    case 12 : return false; // K-
+    case 13 : return true; // n
+    case 10 : return true; // K0_L
+    case 1  : return true; // gamma
+
+    default  : return false;
+  }
+    return false;
+}
+
 Int_t StRHICfSimConvertor::RecoSimulation()
 {
     FillMCData();
 
-    mRHICfPointMaker -> InitRun(18178002); // this run number is for initialization of RHICfDbMaker, it doesn't dependent to reco
+    int testRunNumber = 0;
+    if(mRHICfRunType == rTStype){testRunNumber = 18177043;}
+    if(mRHICfRunType == rTLtype){testRunNumber = 18176012;}
+    if(mRHICfRunType == rTOPtype){testRunNumber = 18177018;}
+
+    mRHICfPointMaker -> InitRun(testRunNumber); // this run number is for initialization of RHICfDbMaker, it doesn't dependent to reco
     mRHICfPointMaker -> Make();
     SaveRecoData();
 
@@ -649,6 +692,7 @@ Int_t StRHICfSimConvertor::FillMCData()
     mSimRHICfHit = mSimDst -> GetSimRHICfHit();
 
     mSimEvent = mSimDst -> GetSimEvent();
+    mRHICfRunType = mSimEvent -> GetRHICfRunType();
     mRHICfColl -> setRunType(mSimEvent -> GetRHICfRunType());
 
     for(int it=0; it<kRHICfNtower; it++){
@@ -732,15 +776,12 @@ Int_t StRHICfSimConvertor::SaveRecoData()
         Float_t posY = mRHICfColl -> pointCollection()[i] -> getPointPos(1);
         Float_t photonE = mRHICfColl -> pointCollection()[i] -> getPointEnergy(0);
         Float_t hadronE = mRHICfColl -> pointCollection()[i] -> getPointEnergy(1);
-        Float_t towerEAll = mRHICfColl -> pointCollection()[i] -> getTowerSumEnergy(0);
-        Float_t towerEPart = mRHICfColl -> pointCollection()[i] -> getTowerSumEnergy(1);
 
         StRHICfSimRHICfPoint* simRHICfPoint = mSimDst -> GetSimRHICfPoint(i);
         simRHICfPoint -> SetTowerIdx(towerIdx);
         simRHICfPoint -> SetPID(pid);
         simRHICfPoint -> SetPointPos(posX, posY);
         simRHICfPoint -> SetPointEnergy(photonE, hadronE);
-        simRHICfPoint -> SetTowerSumEnergy(towerEAll, towerEPart);
     }
 
     LOG_INFO << " StRHICfSimConvertor::SaveRecoData() -- RHICfPoint number: " << mRHICfColl->numberOfPoints() << endm;
@@ -808,28 +849,30 @@ void StRHICfSimConvertor::InitRHICfGeometry()
     }
 }
 
-Int_t StRHICfSimConvertor::GetRHICfGeoHit(double posX, double posY, double posZ, double px, double py, double pz, double e)
+Int_t StRHICfSimConvertor::GetRHICfGeoHit(double vtxStart[], double vtxEnd[], double mom[], double e, int gepid)
 {
-  if(e < 10.){return -1;} // energy cut
+    if(!IsNeutral(gepid)){return -1;}
+    if(e < 1.){return -1;} // energy cut 1 GeV
 
-  double momMag = sqrt(px*px + py*py + pz*pz);
-  double unitVecX = px/momMag;
-  double unitVecY = py/momMag;
-  double unitVecZ = pz/momMag;
+    double p = sqrt(mom[0]*mom[0] + mom[1]*mom[1] + mom[2]*mom[2]);
+    double unitVecX = mom[0]/p;
+    double unitVecY = mom[1]/p;
+    double unitVecZ = mom[2]/p;
 
-  if(unitVecZ < 0){return -1;} // opposite side cut
+    if(vtxEnd[2] > -9990.){return -1;} // stopped track cut
+    if(unitVecZ < 0){return -1;} // opposite side cut
 
-  double mRHICfDetZ = 1780.; // [cm]
-  double z = mRHICfDetZ - posZ;
-  if(z < 0.){return -1;} // create z-position cut
+    double mRHICfDetZ = 1780.; // [cm]
+    double z = mRHICfDetZ - vtxStart[2];
+    if(z < 0.){return -1;} // create z-position cut
 
-  double x = z * (unitVecX/unitVecZ) + posX;
-  double y = z * (unitVecY/unitVecZ) + posY;
+    double x = z * (unitVecX/unitVecZ) + vtxStart[0];
+    double y = z * (unitVecY/unitVecZ) + vtxStart[1];
 
-  int type = mRHICfPoly -> FindBin(x, y);
-  if(type < 1 || type > 2){return -1;} // RHICf geometrical hit cut
+    int type = mRHICfPoly -> FindBin(x, y);
+    if(type < 1 || type > 2){return -1;} // RHICf geometrical hit cut
 
-  return type;
+    return type;
 }
 
 ClassImp(StRHICfSimConvertor)

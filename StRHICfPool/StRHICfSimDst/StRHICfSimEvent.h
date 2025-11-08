@@ -18,6 +18,10 @@ class StRHICfSimEvent : public TObject
         void SetRHICfRunType(int type);
         void SetGeneratorIdx(int idx);
 
+        void SetIsShowerTrigger();
+        void SetIsType1Pi0Trigger();
+        void SetIsHighEMTrigger();
+
         // Event generator information
         void SetXParton1(double val);
         void SetXParton2(double val);
@@ -45,6 +49,10 @@ class StRHICfSimEvent : public TObject
         Int_t GetRHICfRunType();
         Int_t GetGeneratorIdx();
 
+        Bool_t IsShowerTrigger();
+        Bool_t IsType1Pi0Trigger();
+        Bool_t IsHighEMTrigger();
+
         Double_t GetXParton1();
         Double_t GetXParton2();
         Double_t GetXPdf1();
@@ -70,6 +78,9 @@ class StRHICfSimEvent : public TObject
         Int_t mEventNumber;
         Int_t mProcessId;
         Int_t mRHICfRunType;
+        Bool_t mRHICfShowerTrig;
+        Bool_t mRHICfType1Pi0Trig;
+        Bool_t mRHICfHighEMTrig;
         Int_t mGeneratorIdx;
 
         Double_t mXParton1; // x of blue beam parton

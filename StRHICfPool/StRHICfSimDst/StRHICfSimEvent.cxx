@@ -18,6 +18,10 @@ void StRHICfSimEvent::Clear(Option_t *option)
     mRHICfRunType = -999;
     mGeneratorIdx = -999;
 
+    mRHICfShowerTrig = false;
+    mRHICfType1Pi0Trig = false;
+    mRHICfHighEMTrig = false;
+
     mXParton1 = -999.; 
     mXParton2 = -999.; 
     mXPdf1 = -999.; 
@@ -45,6 +49,10 @@ void StRHICfSimEvent::SetProcessId(int id){mProcessId = id;}
 void StRHICfSimEvent::SetRHICfRunType(int type){mRHICfRunType = type;}
 void StRHICfSimEvent::SetGeneratorIdx(int idx){mGeneratorIdx = idx;}
 
+void StRHICfSimEvent::SetIsShowerTrigger(){mRHICfShowerTrig = true;}
+void StRHICfSimEvent::SetIsType1Pi0Trigger(){mRHICfType1Pi0Trig = true;}
+void StRHICfSimEvent::SetIsHighEMTrigger(){mRHICfHighEMTrig = true;}
+
 void StRHICfSimEvent::SetXParton1(double val){mXParton1 = val;}
 void StRHICfSimEvent::SetXParton2(double val){mXParton2 = val;}
 void StRHICfSimEvent::SetXPdf1(double val){mXPdf1 = val;}
@@ -70,6 +78,10 @@ Int_t StRHICfSimEvent::GetEventNumber(){return mEventNumber;}
 Int_t StRHICfSimEvent::GetProcessId(){return mProcessId;}
 Int_t StRHICfSimEvent::GetRHICfRunType(){return mRHICfRunType;}
 Int_t StRHICfSimEvent::GetGeneratorIdx(){return mGeneratorIdx;}
+
+Bool_t StRHICfSimEvent::IsShowerTrigger(){return mRHICfShowerTrig;}
+Bool_t StRHICfSimEvent::IsType1Pi0Trigger(){return mRHICfType1Pi0Trig;}
+Bool_t StRHICfSimEvent::IsHighEMTrigger(){return mRHICfHighEMTrig;}
 
 Double_t StRHICfSimEvent::GetXParton1(){return mXParton1;}
 Double_t StRHICfSimEvent::GetXParton2(){return mXParton2;}

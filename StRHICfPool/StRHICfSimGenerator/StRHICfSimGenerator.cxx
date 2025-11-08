@@ -11,8 +11,6 @@ ClassImp(StRHICfSimGenerator);
 StRHICfSimGenerator::StRHICfSimGenerator(const char *name) : StarGenerator(name)
 {
     mFileName = "";
-    mGeneratorId = -1;
-    mRHICfRunType = -1;
     mSetEventNumber = -1;
     mTotalEventNumber = 0;
     mEventIdx = 0;
@@ -26,15 +24,6 @@ int StRHICfSimGenerator::Init()
     mEvent = new StarGenPPEvent();
     if( mBlue == "proton"  && mYell == "proton") {LOG_INFO << "pp mode detected" << endm;} 
     else{LOG_INFO << "AA (or eA) mode detected... event record will still be a pp event record." << endm;}
-
-    if(mGeneratorId > rQGSJETIII || mGeneratorId < rHerwig7){
-        LOG_ERROR << "StRHICfSimGenerator::Init() -- Invalid generator id: " << mGeneratorId << endm;
-        return kStFatal;
-    }
-    if(mRHICfRunType < rTLtype || mRHICfRunType > rTOPtype){
-        LOG_ERROR << "StRHICfSimGenerator::Init() -- Invalid RHICf run type: " << mGeneratorId << endm;
-        return kStFatal;
-    }
 
     InitTree();
 
@@ -77,8 +66,6 @@ int StRHICfSimGenerator::Generate()
 }
 
 void StRHICfSimGenerator::SetGenFile(TString file){mFileName = file;}
-void StRHICfSimGenerator::SetGeneratorModel(int generatorId){mGeneratorId = generatorId;}
-void StRHICfSimGenerator::SetRHICfRunType(int runtype){mRHICfRunType = runtype;}
 
 int StRHICfSimGenerator::InitTree()
 {
@@ -92,58 +79,47 @@ int StRHICfSimGenerator::InitTree()
         while(getline(inputStream, file)){
             pos = file.find_first_of(" ");
             if (pos != std::string::npos ) file.erase(pos,file.length()-pos);
-            if(file.find("RHICfSimGen.root") != std::string::npos){
+            if(file.find("RHICfSimGenerator.root") != std::string::npos){
                 mFileName = file;
                 fileNum++;
             }
         }
         if(fileNum != 1){
-            LOG_ERROR << "StRHICfSimGenerator::InitTree() -- Input file must be one RHICfSimGen.root file" << endm;
+            LOG_ERROR << "StRHICfSimGenerator::InitTree() -- Input file must be one RHICfSimGenerator.root file" << endm;
             return kStFatal;
         }
     }
-    if(mFileName.Index("RHICfSimGen.root") == -1){
-        LOG_ERROR << "Input generator file don't match the RHICfSimGen.root !!!" << endm;
+    if(mFileName.Index("RHICfSimGenerator.root") == -1){
+        LOG_ERROR << "Input file doesn't match the RHICfSimGenerator.root !!!" << endm;
         return kStFatal;
     }
 
-    TString generatorName = StRHICfSimPar::GetGeneratorName(mGeneratorId);
-    if(mFileName.Index(generatorName) == -1){
-        LOG_ERROR << "Input generator is not " << generatorName << endm;
-        return kStFatal;
-    }
-    else{
-        LOG_INFO << generatorName << " generator file processing... " << endm;
-    }
-
-    if(mRHICfRunType == rTLtype){
-        if(mFileName.Index("TL") == -1){
-            LOG_ERROR << "Input generator is not RHICf TL run type file !!!" << endm;
-            return kStFatal;
-        }
-    }
-    if(mRHICfRunType == rTStype){
-        if(mFileName.Index("TS") == -1){
-            LOG_ERROR << "Input generator is not RHICf TS run type file !!!" << endm;
-            return kStFatal;
-        }
-    }
-    if(mRHICfRunType == rTOPtype){
-        if(mFileName.Index("TOP") == -1){
-            LOG_ERROR << "Input generator is not RHICf TOP run type file !!!" << endm;
-            return kStFatal;
-        }
-    }
-
+    cout << " mFileName " << mFileName << endl;
     mGenFile = new TFile(mFileName, "read");
+    mGenRunTree = (TTree*)mGenFile -> Get("Run");
     mGenTree = (TTree*)mGenFile -> Get("Event");
 
+    int genRunType = -1;
+    int genModelType = -1;
+    mGenRunTree -> SetBranchAddress("RHICfRunType", &genRunType);
+    mGenRunTree -> SetBranchAddress("ModelType", &genModelType);
+    mGenRunTree -> GetEntry(0);
+
+    if(0 > genRunType || rTOPtype < genRunType){
+        LOG_ERROR << "Invalid RHICf run type !!!" << endm;
+        return kStFatal;
+    }
+
+    TString generatorName = StRHICfSimPar::GetGeneratorName(genModelType);
+    if(generatorName == "Non"){
+        LOG_ERROR << "Input generator model doesn't supported by StRHICfSimGenerator !!!" << endm;
+        return kStFatal;
+    }
+    LOG_INFO << generatorName << " generator file processing... " << endm;
+
     mParticleArr = new TClonesArray("TParticle");
-    mGenTree -> SetBranchAddress("particle",&mParticleArr);
-    mGenTree -> SetBranchAddress("process", &mEventProcess);
-    mGenTree -> SetBranchAddress("sHat", &mEvent_sHat);
-    mGenTree -> SetBranchAddress("tHat", &mEvent_tHat);
-    mGenTree -> SetBranchAddress("uHat", &mEvent_uHat);
+    mGenTree -> SetBranchAddress("Particles",&mParticleArr);
+    mGenTree -> SetBranchAddress("ProcessID", &mProcessID);
 
     mTotalEventNumber = mGenTree -> GetEntries();
 
@@ -154,7 +130,7 @@ int StRHICfSimGenerator::InitTree()
         }
         mTotalEventNumber = mSetEventNumber;
     }    
-
+    
     return kStOk;
 }
 
@@ -167,9 +143,9 @@ void StRHICfSimGenerator::FillPP( StarGenEvent *myevent )
 
     event -> idBlue     = 2212;     // Proton Beam
     event -> idYell     = 2212;     // Proton Beam
-    event -> process    = mEventProcess;
-    event -> subprocess = -999;
+    event -> process    = mProcessID;
 
+    event -> subprocess = -999;
     event -> idParton1  = -999;
     event -> idParton2  = -999;
     event -> xParton1   = -999;
@@ -180,14 +156,12 @@ void StRHICfSimGenerator::FillPP( StarGenEvent *myevent )
     event -> Q2ren      = -999;        // renormalization scale
     event -> valence1   = -999;
     event -> valence2   = -999;
-    
-    event -> sHat       = mEvent_sHat;
-    event -> tHat       = mEvent_tHat;
-    event -> uHat       = mEvent_uHat;
+    event -> sHat       = -999;
+    event -> tHat       = -999;
+    event -> uHat       = -999;
     event -> ptHat      = -999;
     event -> thetaHat   = -999;
     event -> phiHat     = -999;
-
     event -> weight     = -999;
 }
 

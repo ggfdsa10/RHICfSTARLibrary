@@ -58,8 +58,6 @@ class StRHICfSimConvertor : public StMaker
 		StRHICfSimConvertor(int convertFlag, const char* fileName, const Char_t* name="RHICfSimConvertor");
 		~StRHICfSimConvertor();
 
-		void SetRHICfRunType(int type){mRHICfRunType = type;}
-
 		Int_t Init();
 		Int_t Make();
 		Int_t Finish();
@@ -68,13 +66,14 @@ class StRHICfSimConvertor : public StMaker
 	private:
 		Int_t InitMuDst2SimDst();
 		Int_t ConvertMuDst2SimDst();
-		Int_t GetGeneratorData();
+		Int_t GetGenEventData();
 
-		bool IsSimPropagate(StRHICfSimTrack* simTrk);
+		bool IsSimPropagate(double vtxStart[], double vtxEnd[], double mom[]);
 		Int_t GetGePid2PDG(int gepid);
+		Bool_t IsNeutral(int gepid);
 
 		void InitRHICfGeometry();
-		Int_t GetRHICfGeoHit(double posX, double posY, double posZ, double px, double py, double pz, double e);
+		Int_t GetRHICfGeoHit(double vtxStart[], double vtxEnd[], double mom[], double e, int gepid);
 
 		Int_t InitSimRecoMode();
 		Int_t RecoSimulation();
@@ -120,8 +119,8 @@ class StRHICfSimConvertor : public StMaker
 		StarGenEvent* mGenEvent;
 		StarGenParticle* mGenParticle;
 
-		vector<int> mRHICfGammaIdx;
-		vector<int> mRHICfNeuIdx;
+		// Temporary particle id array
+		vector<int> mParticleIdx;
 
 		// Reconstruction Coll
 		Long64_t mEvent;
@@ -131,7 +130,6 @@ class StRHICfSimConvertor : public StMaker
 		StRHICfCollection* mRHICfColl;
 		StRHICfHit* mRHICfHit;
 		StRHICfPoint* mRHICfPoint;
-
 
 	ClassDef(StRHICfSimConvertor,0);
 };

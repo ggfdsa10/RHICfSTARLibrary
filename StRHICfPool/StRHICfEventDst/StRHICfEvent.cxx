@@ -15,25 +15,18 @@ void StRHICfEvent::Clear(Option_t *option)
 {
     mRunNumber = 0;
     mEventNumber = 0;
+    mEventTime = 0;
     mFillNumber = 0;
     mBunchNumber = 0;
     mSpinBit = 0;
     mBeamEnergy = 0.;
 
-    mRHICfTrig = false;
-    mDiffractiveTrig = false;
-    mVPDMB30Trig = false;
-    mTPCTrig = false;
+    memset(mTriggerFlag, 0, sizeof(mTriggerFlag));
 
     mRHICfRunNumber = 0;
     mRHICfEventNumber = 0;
     mRHICfTriggerNumber = 0;
     mRHICfRunType = -1;
-
-    mRHICfL20[0] = 0.;
-    mRHICfL20[1] = 0.;
-    mRHICfL90[0] = 0.;
-    mRHICfL90[1] = 0.;
 
     mTofMult = -1;
     mBTofMult = -1;
@@ -50,22 +43,16 @@ void StRHICfEvent::Clear(Option_t *option)
 
 void StRHICfEvent::SetRunNumber(unsigned int num){mRunNumber = num;}
 void StRHICfEvent::SetEventNumber(unsigned int num){mEventNumber = num;}
+void StRHICfEvent::SetEventTime(unsigned int time){mEventTime = time;}
 void StRHICfEvent::SetFillNumber(int num){mFillNumber = num;}
 void StRHICfEvent::SetBunchNumber(int num){mBunchNumber = num;}
 void StRHICfEvent::SetSpinBit(int num){mSpinBit = num;}
 void StRHICfEvent::SetBeamEnergy(float energy){mBeamEnergy = energy;}
 
-void StRHICfEvent::SetRHICfTrig(bool trig){mRHICfTrig = trig;}
-void StRHICfEvent::SetDiffractiveTrig(bool trig){mDiffractiveTrig = trig;}
-void StRHICfEvent::SetVPDMB30Trig(bool trig){mVPDMB30Trig = trig;}
-void StRHICfEvent::SetTPCTrig(bool trig){mTPCTrig = trig;}
-
 void StRHICfEvent::SetRHICfRunNumber(unsigned int num){mRHICfRunNumber = num;}
 void StRHICfEvent::SetRHICfEventNumber(unsigned int num){mRHICfEventNumber = num;}
 void StRHICfEvent::SetRHICfTriggerNumber(unsigned int num){mRHICfTriggerNumber = num;}
 void StRHICfEvent::SetRHICfRunType(int num){mRHICfRunType = num;}
-void StRHICfEvent::SetRHICfL20(int tower, double val){mRHICfL20[tower] = val;}
-void StRHICfEvent::SetRHICfL90(int tower, double val){mRHICfL90[tower] = val;}
 
 void StRHICfEvent::SetTofMult(int num){mTofMult = num;}
 void StRHICfEvent::SetBTofMult(int num){mBTofMult = num;}
@@ -84,15 +71,11 @@ void StRHICfEvent::SetPrimaryVertex(double vx, double vy, double vz)
 
 UInt_t StRHICfEvent::GetRunNumber(){return mRunNumber;}
 UInt_t StRHICfEvent::GetEventNumber(){return mEventNumber;}
+UInt_t StRHICfEvent::GetEventTime(){return mEventTime;}
 Int_t StRHICfEvent::GetFillNumber(){return mFillNumber;}
 Int_t StRHICfEvent::GetBunchNumber(){return mBunchNumber;}
 Int_t StRHICfEvent::GetSpinBit(){return mSpinBit;}
 Float_t StRHICfEvent::GetBeamEnergy(){return mBeamEnergy;}
-
-Bool_t StRHICfEvent::GetRHICfTrig(){return mRHICfTrig;}
-Bool_t StRHICfEvent::GetDiffractiveTrig(){return mDiffractiveTrig;}
-Bool_t StRHICfEvent::GetVPDMB30Trig(){return mVPDMB30Trig;}
-Bool_t StRHICfEvent::GetTPCTrig(){return mTPCTrig;}
 
 UInt_t StRHICfEvent::GetRHICfRunNumber(){return mRHICfRunNumber;}
 UInt_t StRHICfEvent::GetRHICfEventNumber(){return mRHICfEventNumber;}
@@ -101,8 +84,6 @@ Int_t StRHICfEvent::GetRHICfRunType(){return mRHICfRunType;}
 Bool_t StRHICfEvent::GetRHICfShowerTrig(){return (mRHICfTriggerNumber & 0x010)? true : false;}
 Bool_t StRHICfEvent::GetRHICfPi0Trig(){return (mRHICfTriggerNumber & 0x080)? true : false;}
 Bool_t StRHICfEvent::GetRHICfHighEMTrig(){return (mRHICfTriggerNumber & 0x200)? true : false;}
-Double_t StRHICfEvent::GetRHICfL20(int tower){return mRHICfL20[tower];}
-Double_t StRHICfEvent::GetRHICfL90(int tower){return mRHICfL90[tower];}
 
 Int_t StRHICfEvent::GetTofMult(){return mTofMult;}
 Int_t StRHICfEvent::GetBTofMult(){return mBTofMult;}

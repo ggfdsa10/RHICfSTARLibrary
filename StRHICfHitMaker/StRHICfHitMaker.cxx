@@ -49,12 +49,6 @@ int StRHICfHitMaker::InitRun(int runNumber)
     checkRunTypeForRHICf2017(runNumber);
     genCrossTalkMatrix();
 
-    // test
-    // TRandom3* random = new TRandom3(0);
-    // int idx = random -> Uniform(0, 1000000);
-    // TString fileName = Form("%i_%i.txt", runNumber, idx);
-    // txtFile.open(fileName.Data());
-
     return kStOk;
 }
 
@@ -90,11 +84,6 @@ int StRHICfHitMaker::Make()
     mRHICfRawHitColl = mRHICfCollection -> rawHitCollection();
     mRHICfHitColl = mRHICfCollection -> hitCollection();
 
-    // test 
-    // StMuRHICfCollection* muRHICfColl = muDst -> muRHICfCollection();
-    // StMuRHICfRawHit* muRHICfRawHit = muRHICfColl->getRawHit();
-    // txtFile << "RHICfRunNum  " << muRHICfRawHit -> getRHICfRunNumber() << " RHICfEventNum " << muRHICfRawHit -> getRHICfEventNumber() << endl;
-
     // Main calibration
     caliPlate();
     caliGSOBar();
@@ -117,7 +106,7 @@ int StRHICfHitMaker::caliPlate()
             adc[0] = mRHICfRawHitColl -> getPlateADC(it, ip, 0);
             adc[1] = mRHICfRawHitColl -> getPlateADC(it, ip, 1);
 
-            // txtFile << "plate (" << it << " " << ip << ") " << adc[0] << " " << adc[1] << endl; // test
+            double adctmp = adc[0];
 
             if(adc[0] > mADCThreshold){
                 float pactor0 = mRHICfDbMaker -> getPlateRangePar(it, ip, 0);
@@ -128,6 +117,7 @@ int StRHICfHitMaker::caliPlate()
             float pedestal = mRHICfDbMaker -> getPlatePedestal(it, ip);
             float plateGain = mRHICfDbMaker -> getPlateGain(it, ip);
             float plateEnergy = (adc[0] - pedestal)/plateGain;
+
             plateEnergy *= rescaleEnergyFactor(it, ip);
             mRHICfHitColl -> setPlateEnergy(it, ip, plateEnergy);
         }
@@ -150,13 +140,21 @@ int StRHICfHitMaker::caliGSOBar()
                     float gsobarEnergy = (adc - pedestal)/gsobarGain;
 
                     mRHICfHitColl -> setGSOBarEnergy(it, il, ixy, ich, gsobarEnergy);
-
-                    // txtFile << "gsobar (" << it << " " << il << " " << ixy << " " << ich << ") " << adc << endl; // test
                 }
             }
         }
     }
     caliCrossTalk();
+
+    for(int it=0; it<kRHICfNtower; it++){
+        for(int il=0; il<kRHICfNlayer; il++){
+            for(int ixy=0; ixy<kRHICfNxy; ixy++){
+                for(int ich=0; ich<checkGSOBarSize(it); ich++){
+                    double e = mRHICfHitColl -> getGSOBarEnergy(it, il, ixy, ich);
+                }
+            }
+        }
+    }
 
     return kStOk;
 }

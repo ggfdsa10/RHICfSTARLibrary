@@ -15,6 +15,8 @@ void StRHICfSimTrack::Clear(Option_t *option)
 {
     mIsPrimary = false;
     mIsSimPropagate = false;
+    mIsFinal = false;
+    mIsRHICfHit = false;
     mId = -999;
     mPid = -999;
     mParentTrkId = -999;
@@ -27,6 +29,8 @@ void StRHICfSimTrack::Clear(Option_t *option)
 
 void StRHICfSimTrack::SetIsPrimary(){mIsPrimary = true;}
 void StRHICfSimTrack::SetIsSimPropagate(){mIsSimPropagate = true;}
+void StRHICfSimTrack::SetIsFinal(){mIsFinal = true;}
+void StRHICfSimTrack::SetIsRHICfHit(){mIsRHICfHit = true;}
 void StRHICfSimTrack::SetId(int id){mId = id;}
 void StRHICfSimTrack::SetPid(int pid){mPid = pid;}
 void StRHICfSimTrack::SetDaughterNum(int num){mDaughterNum = num;}
@@ -56,6 +60,8 @@ void StRHICfSimTrack::SetVertexEnd(float x, float y, float z)
 
 Bool_t StRHICfSimTrack::IsPrimary(){return mIsPrimary;}
 Bool_t StRHICfSimTrack::IsSimPropagate(){return mIsSimPropagate;}
+Bool_t StRHICfSimTrack::IsFinal(){return mIsFinal;}
+Bool_t StRHICfSimTrack::IsRHICfHit(){return mIsRHICfHit;}
 Int_t StRHICfSimTrack::GetId(){return mId;}
 Int_t StRHICfSimTrack::GetPid(){return mPid;}
 Int_t StRHICfSimTrack::GetParentId(){return mParentTrkId;}

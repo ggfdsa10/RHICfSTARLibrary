@@ -12,6 +12,8 @@
 #ifndef StRHICfPointMaker_H
 #define StRHICfPointMaker_H
 
+#include <string>
+
 #include "StMaker.h"
 #include "StRoot/StRHICfUtil/StRHICfFunction.h"
 #include "StRoot/StRHICfUtil/StRHICfPID.h"
@@ -69,7 +71,7 @@ class StRHICfPointMaker : public StMaker, StRHICfFunction
     bool mWorthy[kRHICfNtower];
     bool mOverlap[kRHICfNtower][kRHICfNxy];
     bool mIsSaveDetailInfo; 
-    
+
   ClassDef(StRHICfPointMaker,0);
 };
 

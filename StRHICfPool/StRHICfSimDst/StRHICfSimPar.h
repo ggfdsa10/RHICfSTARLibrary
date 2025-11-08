@@ -5,11 +5,12 @@
 
 enum GeneratorID{
     rPythia8 = 0,
-    rHerwig7 = 1,
-    rEPOSLHC = 2,
-    rQGSJETII04 = 3,
-    rQGSJETIII = 4,
-    rGeneratorNum = 5
+    rQGSJETIII = 1,
+    rSIBYLL = 2,
+    rEPOSLHCR_S = 3,
+    rEPOSLHCR_F = 4,
+    QGSJETII04 = 5,
+    rGeneratorNum = 6
 };
 
 enum SimProcessPar{
@@ -55,7 +56,10 @@ enum SimRHICfPar{
     rLayerNum = 4,
     rXYNum = 2,
     rSmallBarNum = 20,
-    rLargeBarNum = 40
+    rLargeBarNum = 40,
+    rShowerTrigger = 1,
+    rType1Pi0Trigger = 2,
+    rHighEMTrigger = 3
 };
 
 enum SimZDCPar{
@@ -74,10 +78,11 @@ class StRHICfSimPar
     public:
         inline static TString GetGeneratorName(int generatorId){
             if(generatorId == rPythia8){return "Pythia8";}
-            if(generatorId == rHerwig7){return "Herwig7";}
-            if(generatorId == rEPOSLHC){return "EPOSLHC";}
-            if(generatorId == rQGSJETII04){return "QGSJETII04";}
-            if(generatorId == rQGSJETIII){return "QGSJETIII";}
+            if(generatorId == rQGSJETIII){return "QGSJETIII01";}
+            if(generatorId == rSIBYLL){return "SIBYLL";}
+            if(generatorId == rEPOSLHCR_S){return "EPOSLHCR";}
+            if(generatorId == rEPOSLHCR_F){return "EPOSLHCR_FAST";}
+            if(generatorId == QGSJETII04){return "QGSJETII04";}
             return "Non";
         }
 };

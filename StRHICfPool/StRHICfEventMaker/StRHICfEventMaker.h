@@ -1,5 +1,5 @@
 // ============================================================ 
-// | The StRHICfEventMaker class                                | 
+// | The StRHICfEventMaker class                              | 
 // | for only RHICf asymmetries of the nuetral Pion analysis. | 
 // |                                                          | 
 // | Author: Seunghwan Lee.                                   | 
@@ -34,7 +34,7 @@
 #include "StRHICfPool/StRHICfEventDst/StRHICfBBC.h"
 #include "StRHICfPool/StRHICfEventDst/StRHICfVPD.h"
 #include "StRHICfPool/StRHICfEventDst/StRHICfZDC.h"
-#include "StRHICfPool/StRHICfEventDst/StRHICfParticle.h"
+#include "StRHICfPool/StRHICfEventDst/StRHICfDetHit.h"
 #include "StRHICfPool/StRHICfEventDst/StRHICfDetPoint.h"
 #include "StRHICfPool/StRHICfEventDst/StRHICfFMS.h"
 #include "StRHICfPool/StRHICfEventDst/StRHICfRPS.h"
@@ -102,12 +102,8 @@ class StRHICfEventMaker : public StMaker, StRHICfFunction
 		Int_t rpsData();
 
 		// Utilized functions
-		Bool_t eventCut(StMuRHICfPoint* point);
-		void convertIPSystem(bool metOpt, bool referOpt=0);
-		void kinematics();
+		Bool_t rhicfPointCut(StMuRHICfPoint* point);
 		void spinPatternData();
-		Double_t beamCenterPosition(int xy, bool metOpt, bool referOpt=0); // metOpt: scan & hit mode, referOpt: refer to fill number(21148, 21150) in only TOP type.
-																		   // metOpt false = scan, true = hit mode , referOpt false = 21148, true = 21450 using mode.
 		Int_t eventSummary();
 
 		// Out data structrue
@@ -138,7 +134,7 @@ class StRHICfEventMaker : public StMaker, StRHICfFunction
 		StRHICfBBC* mRHICfBBC;
 		StRHICfVPD* mRHICfVPD;
 		StRHICfZDC* mRHICfZDC;
-		StRHICfParticle* mRHICfParticle;
+		StRHICfDetHit* mRHICfDetHit;
 		StRHICfDetPoint* mRHICfDetPoint;
 		StRHICfFMS* mRHICfFMS;
 		StRHICfRPS* mRHICfRPS;
@@ -165,12 +161,6 @@ class StRHICfEventMaker : public StMaker, StRHICfFunction
 		StMuFmsCollection* muFmsColl;
 		// Roman Pots Coll.
 		StMuRpsCollection* mMuRpsColl;
-
-		// const double distZatIP = 17812.0; // [mm] Distance of the beam from interaction point to RHICf detector. (exactly one)
-		const double distZatIP = 18000.0; // [mm] Distance of the beam from interaction point to RHICf detector.
-		const double geoCenterTL = 20.0; // [mm] geometrical large tower center
-		const double geoCenterTS = 10.0; // [mm] geometrical small tower center
-		const double distTStoTL = 47.4; // [mm] Distance between center of TL and cernter of TS
 
 		int fillNumArray[5];
 		int spinPatterns[5][120][2]; // [Fill number][bunch number][blue, yellow] for Fill no. 21142, 21145, 21148, 21149, 21150

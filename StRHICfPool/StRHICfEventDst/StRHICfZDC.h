@@ -30,7 +30,7 @@ class StRHICfZDC : public TObject
         Int_t GetZDCPmtUnAttenuatedSumADC(int dir); // daq level sum of ADC
         Int_t GetZDCPmtSumTDC(int dir); // daq level sum of ADC
 
-        Int_t GetZDCSmdADC(int dir, int axis, int smd);
+        Int_t GetZDCSmdADC(int dir, int axis, int smd); // Note: Vertical smd have 7, Horizontal smd have 8 slat
         Float_t GetZDCVtxZ();
 
     private:

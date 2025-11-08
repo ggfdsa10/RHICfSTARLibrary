@@ -31,7 +31,7 @@ Int_t StRHICfSimDst::Init()
     if(!mSimBBC){mSimBBC = new StRHICfSimBBC();}
     if(!mSimRHICfHit){mSimRHICfHit = new StRHICfSimRHICfHit();}
     if(!mSimRHICfPointArray){mSimRHICfPointArray = new TClonesArray("StRHICfSimRHICfPoint");}
-    if(!mSimZDC){mSimZDC = new StRHICfSimZDC;}
+    if(!mSimZDC){mSimZDC = new StRHICfSimZDC();}
 
     return 1;
 }

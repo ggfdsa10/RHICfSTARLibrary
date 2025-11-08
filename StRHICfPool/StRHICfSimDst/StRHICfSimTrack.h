@@ -19,6 +19,8 @@ class StRHICfSimTrack : public TObject
 
         void SetIsPrimary();
         void SetIsSimPropagate();
+        void SetIsFinal();
+        void SetIsRHICfHit();
         void SetId(int id);
         void SetPid(int pid);
         void SetParentId(int id);
@@ -30,6 +32,8 @@ class StRHICfSimTrack : public TObject
 
         Bool_t IsPrimary();
         Bool_t IsSimPropagate();
+        Bool_t IsFinal();
+        Bool_t IsRHICfHit();
         Int_t GetId();
         Int_t GetPid();
         Int_t GetParentId();
@@ -50,6 +54,8 @@ class StRHICfSimTrack : public TObject
     private:
         Bool_t mIsPrimary; // it is primary track
         Bool_t mIsSimPropagate; // is track propagated to RHICf simulation
+        Bool_t mIsFinal; // is track final state
+        Bool_t mIsRHICfHit; // is particle hitted RHICf acceptance
         Int_t mId; // StMuMcTrack id()
         Int_t mPid; // PDG encoding 
         Int_t mParentTrkId; // parent track id 

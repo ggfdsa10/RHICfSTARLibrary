@@ -20,6 +20,9 @@ void StRHICfSimRHICfHit::Clear(Option_t *option)
 
     for(int i=0; i<rTowerNum; i++){
         mSimTrkId[i].clear();
+        mSimTrkIncidentPosX[i].clear();
+        mSimTrkIncidentPosY[i].clear();
+        mSimTrkIncidentE[i].clear();
     }
 
     fill_n(&mL20[0], rTowerNum, -999.);
@@ -47,7 +50,13 @@ void StRHICfSimRHICfHit::SetGSOBardE(int tower, int layer, int xy, int bar, floa
     if(tower == rTL){mLargeGSOBardE[layer][xy][bar] = val;}
 }
 
-void StRHICfSimRHICfHit::SetSimTrkId(int tower, int id){mSimTrkId[tower].push_back(id);}
+void StRHICfSimRHICfHit::SetSimTrkId(int tower, int id, double incidentPosX, double incidentPosY, double incidentEnergy)
+{
+    mSimTrkId[tower].push_back(id);
+    mSimTrkIncidentPosX[tower].push_back(incidentPosX);
+    mSimTrkIncidentPosY[tower].push_back(incidentPosY);
+    mSimTrkIncidentE[tower].push_back(incidentEnergy);
+}
 
 void StRHICfSimRHICfHit::SetL20(int tower, float val){mL20[tower] = val;}
 void StRHICfSimRHICfHit::SetL90(int tower, float val){mL90[tower] = val;}
@@ -79,6 +88,13 @@ Float_t StRHICfSimRHICfHit::GetGSOBardE(int tower, int layer, int xy, int bar)
 
 Int_t StRHICfSimRHICfHit::GetSimTrkNum(int tower){return mSimTrkId[tower].size();}
 Int_t StRHICfSimRHICfHit::GetSimTrkId(int tower, int idx){return mSimTrkId[tower][idx];}
+Double_t StRHICfSimRHICfHit::GetSimTrkIncidentPos(int tower, int idx, int xy)
+{
+    if(xy == 0){return mSimTrkIncidentPosX[tower][idx];}
+    if(xy == 1){return mSimTrkIncidentPosY[tower][idx];}
+    return -999.;
+}
+Double_t StRHICfSimRHICfHit::GetSimTrkIncidentEnergy(int tower, int idx){return mSimTrkIncidentE[tower][idx];}
 
 Float_t StRHICfSimRHICfHit::GetL20(int tower){return mL20[tower];}
 Float_t StRHICfSimRHICfHit::GetL90(int tower){return mL90[tower];}
